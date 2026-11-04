@@ -4,8 +4,8 @@
 
 const PRICE = 1785;                                              // Contribution per person (₹)
 const TOTAL_SEATS = 35;                                          // Total bus capacity
-const SITE_URL = "https://vivekjahagirdar26.github.io/yuvatma_bookings/";  // Where site is hosted (keep trailing slash)
-const REPLY_TO = "jahagirdarvivek26@gmail.com";                  // Replies land here
+const SITE_URL = "https://yuvatmabookings.github.io/yuvatma/";  // Where site is hosted (keep trailing slash)
+const REPLY_TO = "yuvatma.bookings@gmail.com";                  // Replies land here
 const FOLDER_NAME = "YUVATMA Payment Screenshots";
 const SESSION_DAYS = 7, CODE_MINUTES = 10;
 
@@ -192,7 +192,7 @@ function sendCode(d) {
     const code = String(parseInt(Utilities.getUuid().replace(/-/g, "").slice(0, 8), 16) % 900000 + 100000);
     c.put("otp:" + email, JSON.stringify({ h: hash(code), t: 0 }), CODE_MINUTES * 60);
     MailApp.sendEmail({
-      to: email, replyTo: REPLY_TO, subject: "Your YUVATMA login code: " + code,
+      to: email, replyTo: REPLY_TO, name: "Team YUVATMA", subject: "Your YUVATMA login code: " + code,
       htmlBody: "<p>Namaskara 🙏</p><p>Your YUVATMA login code is: <b style='font-size:22px;letter-spacing:3px;color:#9e1b1f;'>" + code + "</b></p><p>This code is valid for " + CODE_MINUTES + " minutes. If you did not request this, you can ignore this email.</p><p>Team YUVATMA</p>"
     });
   }
@@ -288,7 +288,7 @@ function replySelected() {
   const text = res.getResponseText().trim();
   if (res.getSelectedButton() !== ui.Button.OK || !text) return;
   MailApp.sendEmail({
-    to: x.v[7], replyTo: REPLY_TO, subject: "YUVATMA 2026: reply to your query (" + x.v[1] + ")",
+    to: x.v[7], replyTo: REPLY_TO, name: "Team YUVATMA", subject: "YUVATMA 2026: reply to your query (" + x.v[1] + ")",
     htmlBody: "<p>Namaskara " + esc(x.v[4]) + ",</p><p>" + esc(text).replace(/\n/g, "<br>") + "</p><p>Booking ID: <b>" + x.v[1] + "</b></p><p>Warm regards,<br>Team YUVATMA</p>"
   });
   tab("Replies", H.R).appendRow([new Date(), x.v[1], text, me()].map(safe));
@@ -300,7 +300,7 @@ function verifySelected() {
   x.s.getRange(x.r, 15, 1, 3).setValues([["Verified", me(), new Date()]]);
   try {
     MailApp.sendEmail({
-      to: x.v[7], replyTo: REPLY_TO, subject: "YUVATMA 2026: Booking Verified (" + x.v[1] + ")",
+      to: x.v[7], replyTo: REPLY_TO, name: "Team YUVATMA", subject: "YUVATMA 2026: Booking Verified (" + x.v[1] + ")",
       htmlBody: "<p>Namaskara " + esc(x.v[4]) + ",</p><p>Your payment has been received and verified for booking <b>" + x.v[1] + "</b>!</p><p>We look forward to welcoming you for YUVATMA 2026 (November 28–29, 2026). Bus pickup timings and boarding point details will be sent to your WhatsApp number.</p><p>Check your booking status anytime: <a href='" + SITE_URL + "my-booking.html'>My Booking Portal</a></p><p>Jai Bajrangbali,<br>Team YUVATMA</p>"
     });
   } catch (e) {}
@@ -310,7 +310,7 @@ function verifySelected() {
 // ---------- Helpers ----------
 function confirmMail(p, id, n, total) {
   MailApp.sendEmail({
-    to: p.email, replyTo: REPLY_TO, subject: "YUVATMA 2026: booking received (" + id + ")",
+    to: p.email, replyTo: REPLY_TO, name: "Team YUVATMA", subject: "YUVATMA 2026: booking received (" + id + ")",
     htmlBody: "<p>Namaskara " + esc(p.name) + ",</p><p>We have successfully received your booking submission for <b>YUVATMA 2026 | Yalagur | GoSeva - 3.0</b> (November 28–29, 2026).</p>" +
       "<p><b>Booking ID: " + id + "</b><br>Seats Reserved: " + n + "<br>Total Contribution: ₹" + total + "</p>" +
       "<p>Our team will verify your payment screenshot and confirm your booking shortly. You can check your booking anytime: <a href='" + SITE_URL + "my-booking.html'>My Booking</a> (log in with your registered email: " + p.email + ").</p><p>Warm regards,<br>Team YUVATMA ❤️</p>"

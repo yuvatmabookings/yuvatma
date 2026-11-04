@@ -4,7 +4,7 @@ var TRUE = true, True = true, FALSE = false, False = false;
 // Edit these values only. Everything else reads from here.
 window.YUV = {
   // 1. Google Apps Script Web App URL
-  API_URL: "https://script.google.com/macros/s/AKfycbz1dRrH2VNpmSD79Hx_OIAz-cDSub_Xsv_j2UB1yVeIdbGB6VVNYL-DjYE7pHrU8EY5/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbzrez6Z5Fmq8sQQpOS2BeL3kNJwVNqUzIw5C2MWHfOruqlwpv7hmGiLH5W03cedYgJH/exec",
 
   // 2. Booking Status & Marketing Control
   // Set BOOKINGS_OPEN to:
@@ -28,5 +28,5 @@ window.YUV = {
   WHATSAPP_GROUP: "https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2",
   WHATSAPP: "https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2",
   PHONE: "+91 9739755771",
-  EMAIL: "jahagirdarvivek26@gmail.com"
+  EMAIL: "yuvatma.bookings@gmail.com"
 };

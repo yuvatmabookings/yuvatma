@@ -96,7 +96,7 @@
     const topBar = $("#top-announcement");
     if (topBar) {
       if (open) {
-        topBar.innerHTML = `<span>🎉 <b>Bookings are now LIVE!</b> Limited to 35 Volvo Bus Seats.</span> <a href="#book">Book Your Spot &rarr;</a>`;
+        topBar.innerHTML = `<span>🎉 <b>Bookings are now LIVE!</b> Limited to 35 AC Bus Seats.</span> <a href="#book">Book Your Spot &rarr;</a>`;
       } else {
         topBar.innerHTML = `<span>📢 <b>YUVATMA GoSeva - 3.0</b> • Bookings Open ${esc(C.BOOKING_OPEN_DATE_STR || "7th Nov")} • Limited to 35 Seats</span> <button type="button" id="bar-interested-btn">✋ Interested</button>`;
         const barIntBtn = $("#bar-interested-btn");
@@ -131,12 +131,10 @@
         heroContainer.innerHTML = `
           <a class="btn" href="#book" id="hero-book-btn">Book your spot</a>
           <button type="button" class="btn ghost" id="hero-interested-btn" style="color:#fff;box-shadow:inset 0 0 0 2px var(--gold)">✋ Join WhatsApp Group</button>
-          <a class="btn ghost" href="#schedule" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,0.4)">View Schedule</a>
         `;
       } else {
         heroContainer.innerHTML = `
           <button type="button" class="btn" id="hero-interested-btn">✋ Interested</button>
-          <a class="btn ghost" href="#schedule" style="color:#fff;box-shadow:inset 0 0 0 2px var(--gold)">View 2-Day Schedule</a>
         `;
       }
       const heroIntBtn = $("#hero-interested-btn");
@@ -633,7 +631,7 @@
         <h3>Booking Received!</h3>
         <p class="bid">${esc(id)}</p>
         <p>A confirmation email has been dispatched to <b>${mail}</b>.</p>
-        <p>Please keep this Booking ID for reference. Our team will verify your payment and send Volvo bus boarding coordinates on WhatsApp.</p>
+        <p>Please keep this Booking ID for reference. Our team will verify your payment and send AC bus boarding coordinates on WhatsApp.</p>
         <div style="margin-top:20px;">
           <a class="btn" href="my-booking.html">View in 'My Booking'</a>
         </div>
