@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Booking | Yuvatma 2026 | GoSeva - 3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Tamma+2:wght@600;700;800&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-left">
+    <button type="button" class="menu-btn" id="menu-btn" aria-label="Open Navigation Menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+    <a href="index.html">
+      <img class="logo" src="logo.png" alt="YUVATMA" onerror="this.src='assets/logo.png'">
+    </a>
+  </div>
+  <nav class="top-nav">
+    <a href="index.html#schedule" class="nav-link">Schedule</a>
+    <a href="index.html#facilities" class="nav-link">Facilities</a>
+    <a class="btn sm" href="index.html#book">Book a spot</a>
+  </nav>
+</header>
+
+<!-- Sidebar Drawer -->
+<div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+<aside class="sidebar" id="sidebar" aria-label="Main Navigation" aria-hidden="true">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <img src="logo.png" alt="YUVATMA" class="sidebar-logo" onerror="this.src='assets/logo.png'">
+      <h3 class="sidebar-title">Yalagur Yatra 2026</h3>
+    </div>
+    <button type="button" class="sidebar-close" id="sidebar-close" aria-label="Close menu" title="Close menu">&#10005;</button>
+  </div>
+
+  <div class="sidebar-profile">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-info">
+      <span class="profile-name" id="sidebar-user-name">My Account</span>
+      <span class="profile-status" id="sidebar-user-status">View &amp; manage bookings</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="index.html" class="sidebar-link">
+      <span class="icon">🏠</span> Home Page
+    </a>
+    <a href="index.html#schedule" class="sidebar-link">
+      <span class="icon">📅</span> 2-Day Schedule
+    </a>
+    <a href="index.html#facilities" class="sidebar-link">
+      <span class="icon">✨</span> Facilities Provided
+    </a>
+    <a href="index.html#seats" class="sidebar-link">
+      <span class="icon">🚌</span> Live Seats Left
+    </a>
+    <a href="index.html#book" class="sidebar-link">
+      <span class="icon">🎟️</span> Book Your Spot
+    </a>
+    <div class="sidebar-divider"></div>
+    <a href="my-booking.html" class="sidebar-link highlight">
+      <span class="icon">📑</span> My Bookings
+    </a>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-contact-box">
+      <h4>Contact YUVATMA</h4>
+      <p class="contact-sub">Questions about your verification or payment?</p>
+      <a href="https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2" target="_blank" class="contact-pill wa" id="sb-wa-link">
+        <span>💬</span> WhatsApp Group
+      </a>
+      <a href="tel:+919739755771" class="contact-pill phone" id="sb-tel-link">
+        <span>📞</span> Call: +91 9739755771
+      </a>
+      <a href="mailto:jahagirdarvivek26@gmail.com" class="contact-pill mail" id="sb-mail-link">
+        <span>✉️</span> Email Support
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<main class="book">
+  <h2>My booking</h2>
+  <p class="sub" id="sub"></p>
+  <div class="card" id="box"></div>
+</main>
+
+<footer>
+  <p>Need assistance? <a id="wa" href="https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2" target="_blank">Join our WhatsApp Group</a></p>
+  <p>Team YUVATMA ❤️ | Yalagur GoSeva - 3.0</p>
+</footer>
+
+<script src="config.js"></script>
+<script src="account.js"></script>
+</body>
+</html>
