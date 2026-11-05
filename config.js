@@ -18,15 +18,16 @@ window.YUV = {
   PRICE: 1785,                         // Contribution per person (₹)
   TOTAL_SEATS: 35,                      // Total bus seat capacity (live tracked)
   AGE_MIN: 18,                          // Age limit minimum
-  AGE_MAX: 35,                          // Age limit maximum
+  AGE_MAX: 30,                          // Age limit maximum
 
   // 4. Payment UPI Details
-  UPI_ID: "vivekvj26@ybl",              // Shown in payment step & QR code
+  UPI_ID: "328511380177528@cnrb",              // Shown in payment step & QR code
   UPI_NAME: "YUVATMA",
 
   // 5. WhatsApp & Contact Details
   WHATSAPP_GROUP: "https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2",
   WHATSAPP: "https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2",
-  PHONE: "+91 9739755771",
+  PHONE: "+91 9739755771",              // Vivek Jahagirdar
+  PHONE2: "+91 9113693518",             // Vishvesha V
   EMAIL: "yuvatma.bookings@gmail.com"
 };

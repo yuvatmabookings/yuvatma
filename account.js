@@ -169,17 +169,13 @@
   }
 
   // Contact links
-  const waGroup = C.WHATSAPP_GROUP || C.WHATSAPP;
-  if (waGroup) {
-    const waUrl = String(waGroup).startsWith("http") ? waGroup : "https://wa.me/" + waGroup;
-    const waFooter = $("#wa");
-    if (waFooter) waFooter.href = waUrl;
-    const sbWa = $("#sb-wa-link");
-    if (sbWa) sbWa.href = waUrl;
-  }
   if (C.PHONE) {
     const sbTel = $("#sb-tel-link");
     if (sbTel) sbTel.href = "tel:" + C.PHONE.replace(/\s+/g, "");
+  }
+  if (C.PHONE2) {
+    const sbTel2 = $("#sb-tel-link2");
+    if (sbTel2) sbTel2.href = "tel:" + C.PHONE2.replace(/\s+/g, "");
   }
   if (C.EMAIL) {
     const sbMail = $("#sb-mail-link");

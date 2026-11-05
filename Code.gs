@@ -66,8 +66,8 @@ function recordInterested(d) {
     return out({ ok: false, error: "Please fill Name, Age, Phone, and Gotra." });
   }
   const age = Number(d.age);
-  if (isNaN(age) || age < 18 || age > 35) {
-    return out({ ok: false, error: "Age limit is 18–35 years." });
+  if (isNaN(age) || age < 18 || age > 30) {
+    return out({ ok: false, error: "Age limit is 18–30 years." });
   }
   const cleanPhone = String(d.phone).replace(/\D/g, "");
   if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
@@ -169,7 +169,7 @@ function validate(d) {
   if (!d || !(d.n >= 1 && d.n <= 4)) return "Invalid group size.";
   if (!d.p || !d.p.name || !/^\S+@\S+\.\S+$/.test(d.p.email || "")) return "Missing your name or a valid email.";
   const age = Number(d.p.age);
-  if (isNaN(age) || age < 18 || age > 35) return "Age must be between 18 and 35 years.";
+  if (isNaN(age) || age < 18 || age > 30) return "Age must be between 18 and 30 years.";
   if (!d.txn || !d.shot) return "Transaction ID and payment screenshot are required.";
   if (d.members.length !== d.n - 1) return "Group member details don't match group size.";
   return "";

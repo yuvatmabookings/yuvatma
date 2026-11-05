@@ -39,7 +39,7 @@
   const V = {
     // Step 1: Clean group size selection
     g: () => `<h3>How many people are coming?</h3>
-      <p class="hint">Select group size to continue (one booking covers up to 4 members, age 18–35).</p>
+      <p class="hint">Select group size to continue (one booking covers up to 4 members, age 18–30).</p>
       <div class="sizes">
         ${[1, 2, 3, 4].map(n => `
           <button type="button" class="size ${S.n == n ? "on" : ""}" data-n="${n}">
@@ -53,7 +53,7 @@
     // Step 2: Personal details
     y: () => `<h3>Your details</h3>
       ${fld("p.name", "Full name", "text", 'autocomplete="name"')}
-      ${fld("p.age", "Age (Must be between 18 and 35)", "number", `min="${C.AGE_MIN || 18}" max="${C.AGE_MAX || 35}" inputmode="numeric"`)}
+      ${fld("p.age", "Age (Must be between 18 and 30)", "number", `min="${C.AGE_MIN || 18}" max="${C.AGE_MAX || 30}" inputmode="numeric"`)}
       ${fld("p.mobile", "Mobile number (linked with WhatsApp)", "tel", NUM)}
       ${fld("p.email", "Email address", "email", 'autocomplete="email"')}
       <label>Home address<textarea data-k="p.addr" rows="2">${esc(get("p.addr"))}</textarea></label>
@@ -62,7 +62,7 @@
 
     // Step 3: Additional members
     m: () => `<h3>Who's coming with you?</h3>${[...Array(S.n - 1)].map((_, i) =>
-      `<fieldset><legend>Person ${i + 2}</legend>${fld(`m.${i}.name`, "Full name")}${fld(`m.${i}.age`, "Age (18–35)", "number", `min="${C.AGE_MIN || 18}" max="${C.AGE_MAX || 35}" inputmode="numeric"`)}${fld(`m.${i}.mobile`, "Mobile number (optional)", "tel", NUM)}</fieldset>`).join("")}`,
+      `<fieldset><legend>Person ${i + 2}</legend>${fld(`m.${i}.name`, "Full name")}${fld(`m.${i}.age`, "Age (18–30)", "number", `min="${C.AGE_MIN || 18}" max="${C.AGE_MAX || 30}" inputmode="numeric"`)}${fld(`m.${i}.mobile`, "Mobile number (optional)", "tel", NUM)}</fieldset>`).join("")}`,
 
     // Step 4: Payment with "Show QR" button beside "Open UPI app"
     p: () => {
@@ -120,8 +120,8 @@
     const heroBadge = $(".launch-badge");
     if (heroBadge) {
       heroBadge.textContent = open
-        ? "🎉 Bookings are LIVE • Age Limit: 18–35 yrs"
-        : `🗓️ Bookings Open ${esc(C.BOOKING_OPEN_DATE_STR || "7th Nov")} • Age Limit: 18–35 yrs`;
+        ? "🎉 Bookings are LIVE • Age Limit: 18–30 yrs"
+        : `🗓️ Bookings Open ${esc(C.BOOKING_OPEN_DATE_STR || "7th Nov")} • Age Limit: 18–30 yrs`;
     }
 
     // 4. Hero Action Buttons
@@ -191,13 +191,13 @@
   }
 
   const P = v => /^[6-9]\d{9}$/.test(v || ""), T = v => (v || "").trim().length > 1;
-  const A = v => +v >= (C.AGE_MIN || 18) && +v <= (C.AGE_MAX || 35);
+  const A = v => +v >= (C.AGE_MIN || 18) && +v <= (C.AGE_MAX || 30);
 
   function check(c) {
     const p = S.p;
     if (c == "y") {
       if (!T(p.name)) return "Enter your full name.";
-      if (!A(p.age)) return `Age must be between ${C.AGE_MIN || 18} and ${C.AGE_MAX || 35} years.`;
+      if (!A(p.age)) return `Age must be between ${C.AGE_MIN || 18} and ${C.AGE_MAX || 30} years.`;
       if (!P(p.mobile)) return "Enter a valid 10-digit mobile number.";
       if (!/^\S+@\S+\.\S+$/.test(p.email || "")) return "Enter a valid email address.";
       if (!T(p.addr)) return "Enter your home address.";
@@ -214,7 +214,7 @@
       for (let i = 0; i < S.n - 1; i++) {
         const m = S.m[i];
         if (!T(m.name) || !A(m.age) || (m.mobile && !P(m.mobile))) {
-          return `Complete person ${i + 2}: full name, age (${C.AGE_MIN || 18}–${C.AGE_MAX || 35}), and valid mobile.`;
+          return `Complete person ${i + 2}: full name, age (${C.AGE_MIN || 18}–${C.AGE_MAX || 30}), and valid mobile.`;
         }
       }
     }
@@ -447,6 +447,30 @@
     };
   }
 
+  // Sidebar WhatsApp link also asks for details before joining
+  const sbWaLink = $("#sb-wa-link");
+  if (sbWaLink) {
+    sbWaLink.onclick = e => {
+      e.preventDefault();
+      closeSidebar();
+      openInterestedModal();
+    };
+  }
+
+  // Footer WhatsApp link also asks for details before joining
+  const waFooter = $("#wa");
+  if (waFooter) {
+    waFooter.onclick = e => {
+      e.preventDefault();
+      openInterestedModal();
+    };
+  }
+
+  // If navigated with hash to join group, automatically open interested modal
+  if (window.location.hash === "#interested" || window.location.hash === "#join-group") {
+    setTimeout(openInterestedModal, 300);
+  }
+
   // Handle Interested Form Submit -> ONLY redirects if Name, Age, Ph no, Gotra are filled!
   if (intForm) {
     intForm.onsubmit = async e => {
@@ -465,8 +489,8 @@
         $("#int-name").focus();
         return;
       }
-      if (!ageStr || isNaN(age) || age < (C.AGE_MIN || 18) || age > (C.AGE_MAX || 35)) {
-        intErr.textContent = `Age must be between ${C.AGE_MIN || 18} and ${C.AGE_MAX || 35} years.`;
+      if (!ageStr || isNaN(age) || age < (C.AGE_MIN || 18) || age > (C.AGE_MAX || 30)) {
+        intErr.textContent = `Age must be between ${C.AGE_MIN || 18} and ${C.AGE_MAX || 30} years.`;
         $("#int-age").focus();
         return;
       }
@@ -640,16 +664,13 @@
   }
 
   // Populate dynamic contact links
-  const waGroup = C.WHATSAPP_GROUP || C.WHATSAPP;
-  if (waGroup) {
-    const waFooter = $("#wa");
-    if (waFooter) waFooter.href = waGroup;
-    const sbWa = $("#sb-wa-link");
-    if (sbWa) sbWa.href = waGroup;
-  }
   if (C.PHONE) {
     const sbTel = $("#sb-tel-link");
     if (sbTel) sbTel.href = "tel:" + C.PHONE.replace(/\s+/g, "");
+  }
+  if (C.PHONE2) {
+    const sbTel2 = $("#sb-tel-link2");
+    if (sbTel2) sbTel2.href = "tel:" + C.PHONE2.replace(/\s+/g, "");
   }
   if (C.EMAIL) {
     const sbMail = $("#sb-mail-link");
