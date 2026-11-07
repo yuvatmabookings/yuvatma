@@ -155,13 +155,54 @@
   transform: translateY(-1px);
 }
 .btn-upi-any {
-  background: #2563eb;
+  background: #1e3a8a;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  font-size: 17px;
+  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.25);
 }
 .btn-upi-any:hover {
-  background: #1d4ed8;
+  background: #172554;
   transform: translateY(-1px);
+}
+.manual-upi-card {
+  background: #fdfaf5;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin: 14px 0;
+  text-align: center;
+}
+.manual-upi-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.manual-upi-help {
+  font-size: 13px;
+  color: var(--ink-light);
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+.upi-id-copy-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.upi-id-text {
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--red);
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  word-break: break-all;
 }
 .btn-whatsapp-screenshot {
   background: #25d366;
@@ -377,10 +418,8 @@
     const rawCoordPhone = b.coordinatorPhone || urlParams.get("cphone") || C.WHATSAPP_SCREENSHOT_PHONE || "9739755771";
     const coordPhone = String(rawCoordPhone).replace(/\D/g, "").slice(-10) || "9739755771";
 
-    // Standard UPI & PhonePe intent links
-    const note = `YUVATMA ${b.id}`;
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${totalAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
-    const phonepeUrl = `phonepe://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${totalAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
+    // Clean Open UPI URI without custom notes/messages (prevents banks/UPI apps from flagging as untrusted)
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${totalAmt}&cu=INR`;
     const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&data=${encodeURIComponent(upiUrl)}`;
 
     // Pre-filled WhatsApp message directed to the specific coordinator who verified the ID
@@ -438,7 +477,7 @@
         <div style="background:var(--gold-light); border:1px solid var(--gold); border-radius:10px; padding:16px; margin:18px 0; text-align:left;">
           <b style="color:var(--ink);">Our team is currently verifying your Valid ID proof.</b>
           <p style="margin:8px 0 0; font-size:14px; color:var(--ink-light); line-height:1.5;">
-            To ensure eligibility (Madhwa youth aged 18–30), we manually check all submitted documents. Once verified, this page will unlock your direct PhonePe/UPI payment buttons, and our team will notify you via Email and WhatsApp.
+            To ensure eligibility (Madhwa youth aged 18–30), we manually check all submitted documents. Once verified, this page will unlock your direct UPI payment buttons, and our team will notify you via Email and WhatsApp.
           </p>
         </div>
         <div style="text-align:center; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
@@ -470,32 +509,39 @@
         <div style="font-size:13px; color:var(--ink-light);">₹${unitPrice.toLocaleString("en-IN")} &times; ${b.people || 1} Person(s)</div>
       </div>
 
-      <!-- Step 1: Open PhonePe or UPI App -->
+      <!-- Step 1: Open Any UPI App or Pay to UPI ID -->
       <div class="flow-step-box">
-        <h3><span class="step-num-pill">1</span> Pay via PhonePe or Any UPI App</h3>
+        <h3><span class="step-num-pill">1</span> Pay via Any UPI App</h3>
         <p style="font-size:14px; color:var(--ink-light); margin-bottom:14px;">
-          Tap below on your phone to open PhonePe or your default UPI payment app directly:
+          Tap below to open your preferred UPI app directly on your phone:
         </p>
         
-        <a href="${esc(phonepeUrl)}" class="btn-app btn-phonepe" id="phonepe-btn">
-          <span>🟣</span> Open PhonePe (${inr(totalAmt)})
-        </a>
-
         <a href="${esc(upiUrl)}" class="btn-app btn-upi-any" id="upi-any-btn">
-          <span>📱</span> Pay via Any UPI App (GPay / Paytm / BHIM)
+          <span>📱</span> Open Any UPI App (${inr(totalAmt)})
         </a>
+        <p style="font-size:12.5px; color:var(--ink-light); text-align:center; margin:-4px 0 14px;">
+          (PhonePe, Google Pay, Paytm, BHIM, Cred, or any Banking UPI App)
+        </p>
 
-        <!-- Desktop / Laptop Scanner Option -->
+        <!-- Direct UPI ID Copy Option (100% Accepted by all Banks) -->
+        <div class="manual-upi-card">
+          <div class="manual-upi-title">💡 Prefer paying directly inside your app?</div>
+          <p class="manual-upi-help">Open your UPI app, tap <b>Pay to UPI ID</b>, paste this ID, and enter <b>${inr(totalAmt)}</b>:</p>
+          <div class="upi-id-copy-row">
+            <span class="upi-id-text" id="upi-val">${esc(upiId)}</span>
+            <button type="button" class="btn sm" id="copy-upi-btn" title="Click to copy UPI ID">📋 Copy UPI ID</button>
+          </div>
+        </div>
+
+        <!-- Desktop / Scanner Option -->
         <div class="qr-box-wrap">
           <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px;">
-            Booking on a Computer / Laptop? Scan with your phone:
+            Or Scan QR Code with any UPI Scanner:
           </p>
           <img class="qr-preview-img" src="${esc(qrSrc)}" alt="UPI QR Code for ₹${totalAmt}">
-          <div>
-            <button type="button" class="copy-upi-tag" id="copy-upi-btn" title="Click to copy UPI ID">
-              📋 UPI ID: <b>${esc(upiId)}</b>
-            </button>
-          </div>
+          <p style="font-size:12px; color:var(--ink-light); margin:0;">
+            Payee: <b>${esc(upiName)}</b> • Amount: <b>${inr(totalAmt)}</b>
+          </p>
         </div>
       </div>
 
@@ -520,19 +566,42 @@
       </div>
     `;
 
-    // Copy UPI Button logic
+    // Copy UPI Button logic with fallback
     const copyBtn = $("#copy-upi-btn");
     if (copyBtn) {
       copyBtn.onclick = () => {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(upiId).then(() => {
-            copyBtn.innerHTML = `✓ Copied <b>${esc(upiId)}</b>!`;
-            setTimeout(() => {
-              copyBtn.innerHTML = `📋 UPI ID: <b>${esc(upiId)}</b>`;
-            }, 2500);
+        const doSuccess = () => {
+          copyBtn.textContent = "✓ Copied!";
+          copyBtn.style.background = "var(--leaf)";
+          copyBtn.style.color = "#fff";
+          setTimeout(() => {
+            copyBtn.textContent = "📋 Copy UPI ID";
+            copyBtn.style.background = "";
+            copyBtn.style.color = "";
+          }, 2500);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(upiId).then(doSuccess).catch(() => {
+            fallbackCopy(upiId);
+            doSuccess();
           });
+        } else {
+          fallbackCopy(upiId);
+          doSuccess();
         }
       };
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
     }
   }
 
