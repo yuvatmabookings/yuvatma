@@ -19,7 +19,7 @@
   const esc = v => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const get = k => k.split(".").reduce((o, x) => o && o[x], S) ?? "";
   const set = (k, v) => { const a = k.split("."), l = a.pop(); a.reduce((o, x) => o[x], S)[l] = v; };
-  const total = () => (S.n || 1) * (C.PRICE || 1750);
+  const total = () => (S.n || 1) * (C.PRICE || 1760);
   const steps = () => S.n > 1 ? ["g", "y", "m", "v"] : ["g", "y", "v"];
   const NAMES = { g: "Group", y: "You", m: "Members", v: "ID Verification" };
   const NUM = 'inputmode="numeric" maxlength="10"';
@@ -209,10 +209,19 @@
     const factPrice = $("#hero-fact-price");
     if (factPrice) {
       const note = typeof C.PRICE_NOTE !== "undefined" ? C.PRICE_NOTE : "(Food + Accommodation + Transport • Payment after ID verification)";
-      factPrice.innerHTML = `<b>Contribution</b> ₹${(C.PRICE || 1750).toLocaleString("en-IN")} per person ${note}`.trim();
+      factPrice.innerHTML = `<b>Contribution</b> ₹${(C.PRICE || 1760).toLocaleString("en-IN")} per person ${note}`.trim();
     }
 
-    // 6. Booking Section Controls
+    // 6. Prebooking Banner Details (Sync dynamically with config.js)
+    const prebookDesc = $("#prebooking-desc");
+    if (prebookDesc) {
+      const pr = (C.PRICE || 1760).toLocaleString("en-IN");
+      const seats = C.TOTAL_SEATS || 35;
+      const dateStr = C.BOOKING_OPEN_DATE_STR || "Friday, 7th November";
+      prebookDesc.innerHTML = `Official registration for YUVATMA GoSeva - 3.0 opens on <b>${dateStr}</b>. Strictly limited to <b>${seats} seats</b> (Madhwa youth of age 18–30). Contribution: ₹${pr} per person (payment collected only after ID verification).`;
+    }
+
+    // 7. Booking Section Controls
     const cardEl = $("#card");
     const bannerEl = $("#prebooking-banner");
     const bookTitle = $("#book-title");
@@ -693,8 +702,8 @@
           action: "book",
           hp: $("#hp").value,
           n: S.n,
-          price: C.PRICE || 1750,
-          total: S.n * (C.PRICE || 1750),
+          price: C.PRICE || 1760,
+          total: S.n * (C.PRICE || 1760),
           p: p,
           members: membersPayload,
           matha: (p.matha || "").trim(),

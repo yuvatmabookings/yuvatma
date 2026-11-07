@@ -293,7 +293,7 @@
 
       // If offline or dev fallback
       if (!booking) {
-        const uPrice = Number(C.PRICE) || 1750;
+        const uPrice = Number(C.PRICE) || 1760;
         booking = {
           id: id,
           name: "Pilgrim",
@@ -306,7 +306,7 @@
 
       renderPaymentPage(box, booking);
     } catch (err) {
-      const uPrice = Number(C.PRICE) || 1750;
+      const uPrice = Number(C.PRICE) || 1760;
       renderPaymentPage(box, {
         id: id,
         name: "Pilgrim",
@@ -367,7 +367,7 @@
     const isIdPending = b.status === "ID Verification Pending" || b.status === "Pending ID Verification";
     
     // Dynamic price from config.js or sheet
-    const unitPrice = Number(C.PRICE) || (b.total && b.people ? Math.round(b.total / b.people) : 1750);
+    const unitPrice = Number(C.PRICE) || (b.total && b.people ? Math.round(b.total / b.people) : 1760);
     const totalAmt = (b.people || 1) * unitPrice;
     const peopleStr = b.people ? `${b.people} ${b.people > 1 ? "Seats" : "Seat"}` : "1 Seat";
 

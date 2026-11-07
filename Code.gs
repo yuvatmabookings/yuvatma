@@ -2,7 +2,7 @@
 // Paste into: Extensions > Apps Script of your Google Sheet.
 // Deploy as: Deploy > Manage deployments > Edit > New version > Deploy. (Execute as: Me, Who has access: Anyone)
 
-const PRICE = 1750;                                              // Confirmed contribution per person (₹)
+const PRICE = 1760;                                              // Confirmed contribution per person (₹)
 const TOTAL_SEATS = 35;                                          // Total bus capacity
 const SITE_URL = "https://yuvatmabookings.github.io/yuvatma/";  // Where site is hosted (keep trailing slash)
 const REPLY_TO = "yuvatma.bookings@gmail.com";                  // Replies land here

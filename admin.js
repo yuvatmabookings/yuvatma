@@ -1444,7 +1444,7 @@
           `"${esc(b.idDocUrl || '')}"`,
           `"${esc(b.contact || '')}"`,
           b.people || 1,
-          b.total || (C.PRICE || 1750),
+          b.total || (C.PRICE || 1760),
           `"${esc(b.coordinatorName || '')}"`,
           `"${esc(b.coordinatorPhone || '')}"`,
           `"${esc(b.txn || '')}"`,
