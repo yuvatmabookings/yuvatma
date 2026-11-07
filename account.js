@@ -134,20 +134,61 @@
   }
 
   const card = b => {
-    const label = b.status === "Verified" ? "Verified ✓" : b.status === "Pending" ? "Waiting for verification" : b.status;
-    return `<article class="bk"><h3>${esc(b.id)} <span class="pill ${b.status === "Verified" ? "ok" : ""}">${esc(label)}</span></h3>
+    const isVerified = b.status === "Confirmed & Verified" || b.status === "Verified";
+    const isIdPending = b.status === "ID Verification Pending" || b.status === "Pending ID Verification" || b.status === "Pending";
+    const isPayPending = b.status === "Payment Pending (ID Verified)" || b.status === "Payment Pending";
+
+    let label = b.status;
+    let pillClass = "";
+    if (isVerified) {
+      label = "Confirmed & Verified ✓";
+      pillClass = "ok";
+    } else if (isIdPending) {
+      label = "ID Verification in Progress 🛡️";
+    } else if (isPayPending) {
+      label = "ID Verified • Pay Now 👉";
+      pillClass = "ready-pay";
+    }
+
+    return `<article class="bk"><h3>${esc(b.id)} <span class="pill ${pillClass}">${esc(label)}</span></h3>
       <dl>
         <dt>Seats</dt><dd>${esc(b.n)} People</dd>
         <dt>Total Amount</dt><dd>₹${Number(b.total).toLocaleString("en-IN")}</dd>
-        <dt>Primary Pilgrim</dt><dd>${esc(b.name)}, ${esc(b.age)} yrs</dd>
+        <dt>Primary Pilgrim</dt><dd>${esc(b.name)}, ${esc(b.age)} yrs &bull; ${esc(b.gender || "Madhwa Youth")}</dd>
         <dt>WhatsApp Mobile</dt><dd>${esc(b.mobile)}</dd>
-        <dt>Address</dt><dd>${esc(b.addr)}</dd>
+        <dt>Area &amp; City</dt><dd>${esc((b.area ? b.area + ", " : "") + (b.city || b.addr || "-"))}</dd>
+        <dt>Gotra</dt><dd>${esc(b.gotra || "-")}</dd>
+        <dt>Matha</dt><dd>${esc(b.matha || "-")}</dd>
+        <dt>Valid ID Proof</dt><dd>${esc(b.idType || "Aadhaar")}: ${esc(b.idNumber || "Submitted")}</dd>
         <dt>Contact Info</dt><dd>${esc(b.contact)}</dd>
-        <dt>Transaction ID</dt><dd>${esc(b.txn)}</dd>
+        ${b.coordinatorName ? `<dt>Assigned Coordinator</dt><dd><b>${esc(b.coordinatorName)}</b> ${b.coordinatorPhone ? `(+91 ${esc(b.coordinatorPhone)})` : ""}</dd>` : ""}
+        ${b.txn ? `<dt>Transaction ID</dt><dd>${esc(b.txn)}</dd>` : ""}
       </dl>
-      ${b.people.length > 1 ? `<h4>Group Members</h4><ul>${b.people.map(p => `<li>${esc(p.name)}, ${esc(p.age)} yrs (${esc(p.role)})</li>`).join("")}</ul>` : ""}
+
+      ${isPayPending ? `
+        <div style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:10px; padding:14px; margin:14px 0;">
+          <b style="color:#3730a3;">ID Proof Verified!</b>
+          <p style="margin:4px 0 10px; font-size:14px; color:#1e1b4b;">Please proceed to pay via PhonePe / any UPI app and send your screenshot to ${b.coordinatorName ? `coordinator <b>${esc(b.coordinatorName)}</b>` : 'our WhatsApp'}:</p>
+          <a href="${esc(b.payLink || ('pay.html?id=' + encodeURIComponent(b.id)))}" class="btn" style="display:inline-block;">🟣 Open Payment Portal (PhonePe / UPI) &rarr;</a>
+        </div>
+      ` : ""}
+
+      ${isIdPending ? `
+        <div style="background:var(--gold-light); border:1px solid var(--gold); border-radius:10px; padding:12px; margin:14px 0;">
+          <p style="margin:0; font-size:14px; color:var(--ink-light);">🛡️ <b>ID Verification in Progress:</b> Our team is verifying your valid ID proof. You will receive your official payment link via email and WhatsApp shortly.</p>
+        </div>
+      ` : ""}
+
+      ${isVerified ? `
+        <div style="background:var(--leaf-light); border:1px solid var(--leaf); border-radius:10px; padding:12px; margin:14px 0;">
+          <p style="margin:0; font-size:14px; color:var(--leaf); font-weight:700;">🎉 Booking Confirmed &amp; Verified!</p>
+          <p style="margin:4px 0 0; font-size:13px; color:var(--ink);">Separate accommodation for boys &amp; girls is arranged. Look out for bus pickup updates on WhatsApp.</p>
+        </div>
+      ` : ""}
+
+      ${b.people && b.people.length > 1 ? `<h4>Group Members</h4><ul>${b.people.filter(p => p.role !== "Primary").map(p => `<li><b>${esc(p.name)}</b>, ${esc(p.age)} yrs (${esc(p.gender || "Madhwa Youth")})${p.matha ? ` &bull; Matha: ${esc(p.matha)}` : ""}${p.gotra ? ` &bull; Gotra: ${esc(p.gotra)}` : ""}</li>`).join("")}</ul>` : ""}
       ${b.q ? `<h4>Your Query</h4><p>${esc(b.q)}</p>` : ""}
-      ${b.replies.map(r => `<div class="rep"><b>Reply from Team YUVATMA</b><p>${esc(r.text)}</p></div>`).join("")}</article>`;
+      ${b.replies && b.replies.length ? b.replies.map(r => `<div class="rep"><b>Reply from Team YUVATMA</b><p>${esc(r.text)}</p></div>`).join("") : ""}</article>`;
   };
 
   function view(list) {

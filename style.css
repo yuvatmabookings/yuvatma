@@ -1316,3 +1316,51 @@ dd {
 .rep p {
   margin: 4px 0 0;
 }
+
+/* Valid ID Proof Verification & Workflow Styles */
+.id-info-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--gold-light);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.id-info-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.id-info-banner b {
+  color: var(--ink);
+  display: block;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+.id-info-banner p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-light);
+  line-height: 1.45;
+}
+.select-input {
+  width: 100%;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 15px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  margin-top: 4px;
+  cursor: pointer;
+}
+.select-input:focus {
+  border-color: var(--red);
+  outline: none;
+}
+.pill.ready-pay {
+  background: #4f46e5;
+  color: #fff;
+}

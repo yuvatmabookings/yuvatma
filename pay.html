@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Payment &amp; Verification | YUVATMA 2026 | GoSeva - 3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Tamma+2:wght@600;700;800&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.pay-page-wrap {
+  max-width: 580px;
+  margin: 30px auto;
+  padding: 0 16px 40px;
+}
+.pay-card {
+  background: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.pay-header {
+  text-align: center;
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+}
+.pay-header h2 {
+  color: var(--red);
+  font-size: 1.8rem;
+  margin: 6px 0;
+}
+.pay-badge-status {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.pay-badge-status.verified {
+  background: var(--leaf-light);
+  color: var(--leaf);
+  border: 1px solid var(--leaf);
+}
+.pay-badge-status.pending {
+  background: var(--gold-light);
+  color: #8c5a00;
+  border: 1px solid var(--gold);
+}
+.pay-badge-status.ready {
+  background: #eef2ff;
+  color: #3b49df;
+  border: 1px solid #c7d2fe;
+}
+
+.booking-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 15px;
+}
+.booking-summary-table tr {
+  border-bottom: 1px solid #f0e6d6;
+}
+.booking-summary-table tr:last-child {
+  border-bottom: 0;
+}
+.booking-summary-table td {
+  padding: 10px 4px;
+}
+.booking-summary-table td:last-child {
+  text-align: right;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.amount-highlight-box {
+  background: var(--gold-light);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 14px 18px;
+  text-align: center;
+  margin: 18px 0;
+}
+.amount-highlight-box .amt-sub {
+  font-size: 13px;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.amount-highlight-box .amt-val {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--red);
+  margin: 4px 0;
+  font-family: "Baloo Tamma 2", sans-serif;
+}
+
+.flow-step-box {
+  background: #fdfaf5;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 18px 0;
+}
+.flow-step-box h3 {
+  font-size: 1.15rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.step-num-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.btn-app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.btn-phonepe {
+  background: #5f259f;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(95, 37, 159, 0.25);
+}
+.btn-phonepe:hover {
+  background: #4b1c80;
+  transform: translateY(-1px);
+}
+.btn-upi-any {
+  background: #2563eb;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+.btn-upi-any:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+.btn-whatsapp-screenshot {
+  background: #25d366;
+  color: #ffffff !important;
+  font-size: 17px;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+}
+.btn-whatsapp-screenshot:hover {
+  background: #1eb857;
+  transform: translateY(-1px);
+}
+
+.qr-box-wrap {
+  text-align: center;
+  padding: 16px 10px;
+  background: #fff;
+  border: 1px solid #ebdcc6;
+  border-radius: 12px;
+  margin: 14px 0;
+}
+.qr-preview-img {
+  width: 200px;
+  height: 200px;
+  display: block;
+  margin: 0 auto 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+.copy-upi-tag {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: monospace;
+}
+.copy-upi-tag:hover {
+  background: #f5ece0;
+}
+.lookup-form {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+.lookup-form input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 15px;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="top">
+  <div class="top-left">
+    <a href="index.html">
+      <img class="logo" src="logo.png" alt="YUVATMA" onerror="this.src='assets/logo.png'">
+    </a>
+  </div>
+  <nav class="top-nav">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="my-booking.html" class="nav-link">My Booking</a>
+    <a href="index.html#book" class="btn sm">Register spot</a>
+  </nav>
+</header>
+
+<div class="pay-page-wrap">
+  <div class="pay-card" id="pay-content">
+    <div style="text-align:center; padding: 30px 10px;">
+      <p style="font-size:1.2rem;">⏳ Loading booking details…</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Need assistance with payment? <a href="https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2" target="_blank">Join our WhatsApp Group</a></p>
+  <p>Coordinator: <a href="tel:+919739755771">Vivek Jahagirdar: +91 9739755771</a> | Email: <a href="mailto:yuvatma.bookings@gmail.com">yuvatma.bookings@gmail.com</a></p>
+  <p style="margin-top: 14px; opacity: 0.85;">Team YUVATMA ❤️ | Yalagur GoSeva - 3.0</p>
+</footer>
+
+<script src="config.js"></script>
+<script>
+(() => {
+  const C = window.YUV || {};
+  const $ = s => document.querySelector(s);
+  const esc = v => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const inr = n => "₹" + Number(n || 0).toLocaleString("en-IN");
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookingIdParam = (urlParams.get("id") || "").trim().toUpperCase();
+
+  const upiId = C.UPI_ID || "328511380177528@cnrb";
+  const upiName = C.UPI_NAME || "YUVATMA";
+  const waPhone = C.WHATSAPP_SCREENSHOT_PHONE || "919739755771";
+
+  async function loadBooking(id) {
+    const box = $("#pay-content");
+    if (!id) {
+      renderLookup(box);
+      return;
+    }
+
+    box.innerHTML = `<div style="text-align:center; padding:30px 10px;">
+      <p style="font-size:1.1rem; color:var(--ink);">🔍 Fetching details for <b>${esc(id)}</b>…</p>
+    </div>`;
+
+    try {
+      let booking = null;
+      if (C.API_URL && !C.API_URL.includes("PASTE_YOUR_APPS_SCRIPT")) {
+        const res = await fetch(C.API_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "payInfo", id: id })
+        });
+        const data = await res.json();
+        if (data && data.ok && data.booking) {
+          booking = data.booking;
+        } else if (data && !data.ok && data.error) {
+          renderNotFound(box, id, data.error);
+          return;
+        }
+      }
+
+      // If offline or dev fallback
+      if (!booking) {
+        const uPrice = Number(C.PRICE) || 1750;
+        booking = {
+          id: id,
+          name: "Pilgrim",
+          people: 1,
+          total: uPrice,
+          status: "Payment Pending (ID Verified)",
+          idType: "Aadhaar"
+        };
+      }
+
+      renderPaymentPage(box, booking);
+    } catch (err) {
+      const uPrice = Number(C.PRICE) || 1750;
+      renderPaymentPage(box, {
+        id: id,
+        name: "Pilgrim",
+        people: 1,
+        total: uPrice,
+        status: "Payment Pending (ID Verified)"
+      });
+    }
+  }
+
+  function renderLookup(box) {
+    box.innerHTML = `
+      <div class="pay-header">
+        <span style="font-size:2.8rem">💳</span>
+        <h2>YUVATMA Payment Portal</h2>
+        <p style="color:var(--ink-light);margin-top:4px;">Enter your Booking ID to view payment options &amp; send screenshot.</p>
+      </div>
+      <form id="lookup-f">
+        <label>Enter Booking ID (e.g. YUV-0001)
+          <div class="lookup-form">
+            <input type="text" id="lookup-id" placeholder="YUV-0001" autocomplete="off" required>
+            <button type="submit" class="btn">Search</button>
+          </div>
+        </label>
+      </form>
+      <div style="text-align:center;margin-top:20px;">
+        <p style="font-size:14px;color:var(--ink-light);">Don't have your Booking ID? Check your registration email or <a href="my-booking.html">log in to 'My Booking'</a>.</p>
+      </div>
+    `;
+    const form = $("#lookup-f");
+    if (form) {
+      form.onsubmit = e => {
+        e.preventDefault();
+        const val = ($("#lookup-id").value || "").trim().toUpperCase();
+        if (val) {
+          window.location.search = "?id=" + encodeURIComponent(val);
+        }
+      };
+    }
+  }
+
+  function renderNotFound(box, id, error) {
+    box.innerHTML = `
+      <div class="pay-header">
+        <span style="font-size:2.8rem">⚠️</span>
+        <h2>Booking Not Found</h2>
+        <p style="color:var(--ink-light);">${esc(error || "We could not find a booking matching this ID.")}</p>
+      </div>
+      <div style="text-align:center;margin-top:20px;">
+        <a href="pay.html" class="btn ghost">Try another Booking ID</a>
+        <a href="my-booking.html" class="btn" style="margin-left:8px;">View My Bookings</a>
+      </div>
+    `;
+  }
+
+  function renderPaymentPage(box, b) {
+    const isVerified = b.status === "Confirmed & Verified" || b.status === "Verified";
+    const isIdPending = b.status === "ID Verification Pending" || b.status === "Pending ID Verification";
+    
+    // Dynamic price from config.js or sheet
+    const unitPrice = Number(C.PRICE) || (b.total && b.people ? Math.round(b.total / b.people) : 1750);
+    const totalAmt = (b.people || 1) * unitPrice;
+    const peopleStr = b.people ? `${b.people} ${b.people > 1 ? "Seats" : "Seat"}` : "1 Seat";
+
+    // Coordinator details: check booking data or URL parameters (passed when admin approved ID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const coordName = b.coordinatorName || urlParams.get("cname") || "Vivek Jahagirdar";
+    const rawCoordPhone = b.coordinatorPhone || urlParams.get("cphone") || C.WHATSAPP_SCREENSHOT_PHONE || "9739755771";
+    const coordPhone = String(rawCoordPhone).replace(/\D/g, "").slice(-10) || "9739755771";
+
+    // Standard UPI & PhonePe intent links
+    const note = `YUVATMA ${b.id}`;
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${totalAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const phonepeUrl = `phonepe://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${totalAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&data=${encodeURIComponent(upiUrl)}`;
+
+    // Pre-filled WhatsApp message directed to the specific coordinator who verified the ID
+    const waText = `Namaskara ${coordName} 🙏, I have completed the contribution payment of ${inr(totalAmt)} for YUVATMA Booking ID: ${b.id} (${b.name}). Attaching my payment screenshot here.`;
+    const waLink = `https://wa.me/91${coordPhone}?text=${encodeURIComponent(waText)}`;
+
+    // Status Badge
+    let badgeHtml = "";
+    if (isVerified) {
+      badgeHtml = `<span class="pay-badge-status verified">✓ Confirmed &amp; Verified</span>`;
+    } else if (isIdPending) {
+      badgeHtml = `<span class="pay-badge-status pending">🛡️ ID Verification in Progress</span>`;
+    } else {
+      badgeHtml = `<span class="pay-badge-status ready">ID Verified • Payment Pending</span>`;
+    }
+
+    if (isVerified) {
+      box.innerHTML = `
+        <div class="pay-header">
+          <span style="font-size:3rem">🎉</span>
+          <h2>Booking Confirmed &amp; Verified!</h2>
+          <div style="margin-top:8px;">${badgeHtml}</div>
+        </div>
+        <table class="booking-summary-table">
+          <tr><td>Booking ID</td><td>${esc(b.id)}</td></tr>
+          <tr><td>Pilgrim Name</td><td>${esc(b.name)}</td></tr>
+          <tr><td>Seats Confirmed</td><td>${esc(peopleStr)}</td></tr>
+          <tr><td>Total Contribution</td><td>${inr(totalAmt)} (Verified)</td></tr>
+        </table>
+        <div style="background:var(--leaf-light); border:1px solid var(--leaf); border-radius:10px; padding:16px; margin:18px 0; text-align:center;">
+          <p style="margin:0; font-weight:700; color:var(--leaf); font-size:16px;">Your registration and payment have been confirmed!</p>
+          <p style="margin:8px 0 0; font-size:14px; color:var(--ink);">Bus boarding points, departure timings, and itinerary updates will be shared in our official WhatsApp group.</p>
+        </div>
+        <div style="text-align:center; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <a href="my-booking.html" class="btn">View in 'My Booking'</a>
+          <a href="${esc(C.WHATSAPP_GROUP || '#')}" target="_blank" class="btn ghost">Open WhatsApp Group</a>
+        </div>
+      `;
+      return;
+    }
+
+    if (isIdPending) {
+      box.innerHTML = `
+        <div class="pay-header">
+          <span style="font-size:3rem">🛡️</span>
+          <h2>ID Verification Pending</h2>
+          <div style="margin-top:8px;">${badgeHtml}</div>
+        </div>
+        <table class="booking-summary-table">
+          <tr><td>Booking ID</td><td>${esc(b.id)}</td></tr>
+          <tr><td>Pilgrim Name</td><td>${esc(b.name)}</td></tr>
+          <tr><td>Seats Requested</td><td>${esc(peopleStr)}</td></tr>
+          <tr><td>Expected Contribution</td><td>${inr(totalAmt)}</td></tr>
+        </table>
+        <div style="background:var(--gold-light); border:1px solid var(--gold); border-radius:10px; padding:16px; margin:18px 0; text-align:left;">
+          <b style="color:var(--ink);">Our team is currently verifying your Valid ID proof.</b>
+          <p style="margin:8px 0 0; font-size:14px; color:var(--ink-light); line-height:1.5;">
+            To ensure eligibility (Madhwa youth aged 18–30), we manually check all submitted documents. Once verified, this page will unlock your direct PhonePe/UPI payment buttons, and our team will notify you via Email and WhatsApp.
+          </p>
+        </div>
+        <div style="text-align:center; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <a href="my-booking.html" class="btn">Check in 'My Booking'</a>
+          <a href="index.html" class="btn ghost">Back to Home</a>
+        </div>
+      `;
+      return;
+    }
+
+    // Standard Payment Ready View (Requirement 8)
+    box.innerHTML = `
+      <div class="pay-header">
+        <span style="font-size:2.8rem">🙏</span>
+        <h2>Complete Your Contribution</h2>
+        <div style="margin-top:6px;">${badgeHtml}</div>
+      </div>
+
+      <table class="booking-summary-table">
+        <tr><td>Booking ID</td><td>${esc(b.id)}</td></tr>
+        <tr><td>Pilgrim Name</td><td>${esc(b.name)}</td></tr>
+        ${b.matha ? `<tr><td>Matha</td><td>${esc(b.matha)}</td></tr>` : ""}
+        <tr><td>Seats Reserved</td><td>${esc(peopleStr)}</td></tr>
+      </table>
+
+      <div class="amount-highlight-box">
+        <div class="amt-sub">Total Amount to Pay</div>
+        <div class="amt-val">${inr(totalAmt)}</div>
+        <div style="font-size:13px; color:var(--ink-light);">₹${unitPrice.toLocaleString("en-IN")} &times; ${b.people || 1} Person(s)</div>
+      </div>
+
+      <!-- Step 1: Open PhonePe or UPI App -->
+      <div class="flow-step-box">
+        <h3><span class="step-num-pill">1</span> Pay via PhonePe or Any UPI App</h3>
+        <p style="font-size:14px; color:var(--ink-light); margin-bottom:14px;">
+          Tap below on your phone to open PhonePe or your default UPI payment app directly:
+        </p>
+        
+        <a href="${esc(phonepeUrl)}" class="btn-app btn-phonepe" id="phonepe-btn">
+          <span>🟣</span> Open PhonePe (${inr(totalAmt)})
+        </a>
+
+        <a href="${esc(upiUrl)}" class="btn-app btn-upi-any" id="upi-any-btn">
+          <span>📱</span> Pay via Any UPI App (GPay / Paytm / BHIM)
+        </a>
+
+        <!-- Desktop / Laptop Scanner Option -->
+        <div class="qr-box-wrap">
+          <p style="font-size:13px; font-weight:700; color:var(--ink); margin:0 0 8px;">
+            Booking on a Computer / Laptop? Scan with your phone:
+          </p>
+          <img class="qr-preview-img" src="${esc(qrSrc)}" alt="UPI QR Code for ₹${totalAmt}">
+          <div>
+            <button type="button" class="copy-upi-tag" id="copy-upi-btn" title="Click to copy UPI ID">
+              📋 UPI ID: <b>${esc(upiId)}</b>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Send Screenshot on WhatsApp to the Coordinator who verified the ID -->
+      <div class="flow-step-box" style="border-color:#bbf7d0; background:#f0fdf4;">
+        <h3 style="color:#166534;"><span class="step-num-pill" style="background:#16a34a;">2</span> Send Screenshot on WhatsApp</h3>
+        <p style="font-size:14px; color:#14532d; margin-bottom:14px; line-height:1.5;">
+          Once the payment is done, tap below to send the payment screenshot to your assigned YUVATMA Coordinator <b>${esc(coordName)}</b> on WhatsApp:
+        </p>
+
+        <a href="${esc(waLink)}" target="_blank" rel="noopener" class="btn-app btn-whatsapp-screenshot" id="wa-shot-btn">
+          <span>📲</span> Send Screenshot to ${esc(coordName)} on WhatsApp
+        </a>
+
+        <p style="margin:8px 0 0; font-size:13px; color:#166534; text-align:center;">
+          Assigned Coordinator: <b>${esc(coordName)} (+91 ${esc(coordPhone)})</b>. Once your coordinator verifies your screenshot, your booking will be confirmed!
+        </p>
+      </div>
+
+      <div style="text-align:center; margin-top:20px;">
+        <a href="my-booking.html" class="link">View status in 'My Booking' &rarr;</a>
+      </div>
+    `;
+
+    // Copy UPI Button logic
+    const copyBtn = $("#copy-upi-btn");
+    if (copyBtn) {
+      copyBtn.onclick = () => {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(upiId).then(() => {
+            copyBtn.innerHTML = `✓ Copied <b>${esc(upiId)}</b>!`;
+            setTimeout(() => {
+              copyBtn.innerHTML = `📋 UPI ID: <b>${esc(upiId)}</b>`;
+            }, 2500);
+          });
+        }
+      };
+    }
+  }
+
+  // Init
+  loadBooking(bookingIdParam);
+})();
+</script>
+</body>
+</html>

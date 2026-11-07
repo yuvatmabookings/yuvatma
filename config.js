@@ -9,13 +9,14 @@ window.YUV = {
   // 2. Booking Status & Marketing Control
   // Set BOOKINGS_OPEN to:
   //   false -> Marketing mode: Price is hidden, booking wizard is hidden, and "Interested" button is active
-  //   true  -> Bookings are LIVE: Registration wizard is active, price is shown, and "Book now" is active!
+  //   true  -> Bookings are LIVE: Registration wizard is active, price is shown, and "Register now" is active!
   BOOKINGS_OPEN: false,
-  BOOKINGS_OPN: false,                  // Support both spellings so it never fails!
+  BOOKINGS_OPN: true,                  // Support both spellings so it never fails!
   BOOKING_OPEN_DATE_STR: "7th November 2026",
 
   // 3. Trip & Eligibility
-  PRICE: 1785,                         // Contribution per person (₹)
+  PRICE: 1760,                         // Confirmed contribution per person (₹) - configurable
+  PRICE_NOTE: "(Food + Accommodation + Transport)", // Subtitle / note shown in hero section
   TOTAL_SEATS: 35,                      // Total bus seat capacity (live tracked)
   AGE_MIN: 18,                          // Age limit minimum
   AGE_MAX: 30,                          // Age limit maximum
@@ -24,9 +25,15 @@ window.YUV = {
   UPI_ID: "328511380177528@cnrb",              // Shown in payment step & QR code
   UPI_NAME: "YUVATMA",
 
-  // 5. WhatsApp & Contact Details
+  // 5. Admin Panel Security
+  // Note: Admin passcodes are stored privately in Google Apps Script (Script Properties & Admins tab)
+  // and are NOT stored in this public source code. You can change passwords anytime from admin.html!
+  ADMIN_PASSCODE: "",                   // Kept empty: Authenticated securely via Google Apps Script
+
+  // 6. WhatsApp & Contact Details
   WHATSAPP_GROUP: "https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2",
   WHATSAPP: "https://chat.whatsapp.com/E0sBKM5HKgl7DMPtVPsWwL?s=cl&p=a&iam=2",
+  WHATSAPP_SCREENSHOT_PHONE: "919739755771", // Number to send payment screenshot to
   PHONE: "+91 9739755771",              // Vivek Jahagirdar
   PHONE2: "+91 9113693518",             // Vishvesha V
   EMAIL: "yuvatma.bookings@gmail.com"

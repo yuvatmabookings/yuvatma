@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard | YUVATMA 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Tamma+2:wght@600;700;800&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* Admin Specific Styles */
+.admin-body {
+  background: #f4efe6;
+  min-height: 100vh;
+}
+.admin-nav {
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.admin-nav-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.admin-brand img {
+  height: 38px;
+}
+.admin-brand h1 {
+  font-size: 1.25rem;
+  color: var(--gold);
+  margin: 0;
+  line-height: 1.2;
+}
+.admin-brand span {
+  font-size: 11px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.admin-menu-toggle {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.admin-menu-toggle:hover, .admin-menu-toggle.active {
+  background: rgba(255,255,255,0.25);
+}
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.admin-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: #fff;
+}
+.role-badge {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.role-badge.owner { background: #f3b23e; color: #2b120c; }
+.role-badge.write { background: #16a34a; color: #fff; }
+.role-badge.read { background: #64748b; color: #fff; }
+.btn-admin-sm {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-admin-sm:hover {
+  background: rgba(255,255,255,0.15);
+}
+.btn-admin-logout {
+  background: #b00020;
+  border-color: #b00020;
+}
+.btn-admin-logout:hover {
+  background: #8e0018;
+}
+
+/* Container */
+.admin-container {
+  max-width: 1400px;
+  margin: 24px auto;
+  padding: 0 20px 40px;
+}
+
+/* Login Box */
+.login-wrap {
+  max-width: 420px;
+  margin: 80px auto;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 36px 28px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.login-wrap h2 {
+  color: var(--red);
+  margin: 10px 0 6px;
+}
+.login-wrap p {
+  color: var(--ink-light);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.login-form input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+/* KPI Stats Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(43,18,12,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--gold);
+}
+.kpi-card.green::before { background: var(--leaf); }
+.kpi-card.red::before { background: var(--red); }
+.kpi-card.purple::before { background: #5f259f; }
+.kpi-card.blue::before { background: #2563eb; }
+.kpi-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 4px 0 0;
+  font-family: "Baloo Tamma 2", sans-serif;
+  line-height: 1.1;
+}
+.kpi-sub {
+  font-size: 12px;
+  color: #7a665c;
+  margin-top: 4px;
+}
+
+/* Controls Bar */
+.controls-bar {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.search-box {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #888;
+}
+.search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.search-clear:hover {
+  color: var(--red);
+}
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fdfaf5;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn.active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+.tab-btn .badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(0,0,0,0.08);
+  margin-left: 4px;
+}
+.tab-btn.active .badge {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+/* Bookings Table / Cards */
+.table-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(43,18,12,0.05);
+}
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+table.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  text-align: left;
+}
+table.admin-table th {
+  background: #fbf7ef;
+  color: var(--ink);
+  padding: 12px 14px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--line);
+  white-space: nowrap;
+}
+table.admin-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f0e6d6;
+  vertical-align: top;
+}
+table.admin-table tr:hover td {
+  background: #fffefb;
+}
+
+/* Status Badges */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.status-pill.id-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+.status-pill.pay-pending {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+.status-pill.confirmed {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+/* Action Buttons inside Table */
+.action-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+}
+.btn-action {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.btn-action.approve-id {
+  background: #2563eb;
+  color: #fff !important;
+}
+.btn-action.approve-id:hover {
+  background: #1d4ed8;
+}
+.btn-action.confirm-pay {
+  background: #16a34a;
+  color: #fff !important;
+}
+.btn-action.confirm-pay:hover {
+  background: #15803d;
+}
+.btn-action.wa-chat {
+  background: #f0fdf4;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0;
+}
+.btn-action.wa-chat:hover {
+  background: #dcfce7;
+}
+.btn-action.view-doc {
+  background: #f8fafc;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1;
+}
+.btn-action.view-doc:hover {
+  background: #e2e8f0;
+}
+
+/* Details Popup Modal */
+.admin-modal {
+  max-width: 650px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.admin-modal.wide-modal {
+  max-width: 840px;
+}
+.admin-team-card {
+  background: #fdfaf5;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.admin-team-card h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  font-size: 14px;
+  margin: 16px 0;
+}
+.detail-item {
+  background: #fdfaf5;
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+.detail-label {
+  font-size: 12px;
+  color: #7a665c;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.detail-value {
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.notice-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1e293b;
+  color: #fff;
+  padding: 14px 22px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  font-size: 15px;
+  font-weight: 600;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.notice-toast.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* ============================================================
+   RESPONSIVE MOBILE STYLES FOR ADMIN DASHBOARD (Phone Friendly)
+   ============================================================ */
+@media (max-width: 860px) {
+  /* 1. Mobile Header & Nav */
+  .admin-nav {
+    padding: 10px 14px;
+  }
+  .admin-menu-toggle {
+    display: inline-flex;
+  }
+  .admin-brand h1 {
+    font-size: 1.1rem;
+  }
+  .admin-brand img {
+    height: 32px;
+  }
+  .admin-actions {
+    display: none !important;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .admin-actions.mobile-open {
+    display: flex !important;
+  }
+  .admin-user-pill {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 8px 12px;
+  }
+  .btn-admin-sm {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  /* 2. Container Padding */
+  .admin-container {
+    padding: 0 12px 30px;
+    margin: 14px auto;
+  }
+
+  /* 3. KPI Summary Grid (2 columns on mobile) */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi-card {
+    padding: 12px 10px;
+  }
+  .kpi-title {
+    font-size: 10.5px;
+  }
+  .kpi-value {
+    font-size: 1.6rem;
+  }
+  .kpi-sub {
+    font-size: 11px;
+  }
+
+  /* 4. Controls Bar (Search + Swipeable Tabs) */
+  .controls-bar {
+    padding: 12px;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .search-box {
+    width: 100%;
+    min-width: 100%;
+  }
+  .search-box input {
+    font-size: 14.5px;
+    padding: 10px 12px 10px 36px;
+  }
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* 5. Mobile Card Transformation for Bookings & Inquiries */
+  .table-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .table-responsive {
+    overflow: visible;
+  }
+  table.admin-table,
+  table.admin-table thead,
+  table.admin-table tbody,
+  table.admin-table th,
+  table.admin-table td,
+  table.admin-table tr {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  table.admin-table thead {
+    display: none;
+  }
+  table.admin-table tr {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    padding: 16px;
+    box-shadow: 0 3px 10px rgba(43,18,12,0.05);
+  }
+  table.admin-table td {
+    padding: 9px 0;
+    border-bottom: 1px dashed #f0e6d6;
+    text-align: left;
+  }
+  table.admin-table td:last-child {
+    border-bottom: none;
+    padding-top: 14px;
+  }
+  table.admin-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #8c7366;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  table.admin-table td[data-label="Actions"]::before,
+  table.admin-table td[data-label="Action"]::before {
+    display: none;
+  }
+  .action-cluster {
+    width: 100%;
+    min-width: 0;
+    gap: 8px;
+  }
+  .btn-action {
+    width: 100%;
+    padding: 11px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+
+  /* 6. Modal Dialogs on Phone */
+  .modal-dialog.admin-modal {
+    width: 95% !important;
+    max-width: 95% !important;
+    max-height: 90vh !important;
+    padding: 18px 16px !important;
+    margin: 16px auto !important;
+    box-sizing: border-box !important;
+  }
+  .detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .detail-item {
+    padding: 8px 12px !important;
+  }
+  .detail-value {
+    font-size: 14px !important;
+    word-break: break-word !important;
+  }
+
+  /* 7. Toast on Phone */
+  .notice-toast {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-wrap {
+    margin: 36px 12px;
+    padding: 24px 18px;
+  }
+  .login-wrap h2 {
+    font-size: 1.45rem;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .kpi-value {
+    font-size: 1.45rem;
+  }
+}
+</style>
+</head>
+<body class="admin-body">
+
+<!-- Admin Navigation -->
+<header class="admin-nav">
+  <div class="admin-nav-inner">
+    <div class="admin-brand">
+      <img src="logo.png" alt="YUVATMA" onerror="this.src='assets/logo.png'">
+      <div class="admin-brand-info">
+        <h1>YUVATMA Admin</h1>
+        <span>CONFIDENTIAL</span>
+      </div>
+    </div>
+    <button type="button" class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Toggle admin menu" style="display:none;">
+      <span>⚙️ Actions</span>
+    </button>
+  </div>
+  <div class="admin-actions" id="nav-actions" style="display:none;">
+    <div class="admin-user-pill" id="admin-user-pill">
+      <span id="admin-user-icon">👤</span>
+      <span id="admin-user-name">Main Admin</span>
+      <span class="role-badge owner" id="admin-user-role">Owner</span>
+    </div>
+    <button type="button" class="btn-admin-sm" id="manage-admins-btn" style="background:#b45309; border-color:#d97706;">
+      👥 Admin Team
+    </button>
+    <button type="button" class="btn-admin-sm" id="change-pass-btn" style="background:#334155; border-color:#475569;">
+      🔑 Change Password
+    </button>
+    <button type="button" class="btn-admin-sm" id="refresh-btn">🔄 Refresh Data</button>
+    <button type="button" class="btn-admin-sm" id="export-csv-btn">📥 Export CSV</button>
+    <a href="pay.html" target="_blank" class="btn-admin-sm">💳 Pay Portal</a>
+    <button type="button" class="btn-admin-sm btn-admin-logout" id="logout-btn">Log out</button>
+  </div>
+</header>
+
+<main class="admin-container">
+
+  <!-- 1. Password Lock View -->
+  <div id="login-view" class="login-wrap">
+    <div style="font-size:3rem; margin-bottom:8px;">🔒</div>
+    <h2>Admin Authentication</h2>
+    <p>Sign in with your Admin Account or Master Passcode.</p>
+    <form id="admin-login-form" class="login-form">
+      <div style="text-align:left; margin-bottom:12px;">
+        <label for="admin-email" style="font-size:12.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">
+          Admin Email or Master Passcode
+        </label>
+        <input type="text" id="admin-email" placeholder="e.g. admin@yuvatma.com or Master Passcode" autocomplete="username" autofocus required>
+      </div>
+      <div style="text-align:left; margin-bottom:12px;">
+        <label for="admin-password" style="font-size:12.5px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px;">
+          Password <span style="font-weight:normal; font-size:11.5px; color:#888;">(leave empty if passcode above)</span>
+        </label>
+        <input type="password" id="admin-password" placeholder="Admin Password" autocomplete="current-password">
+      </div>
+      <p class="err-msg" id="login-err" style="color:var(--red); font-size:13.5px; margin-bottom:14px; min-height:18px;"></p>
+      <button type="submit" class="btn" style="width:100%;" id="login-submit-btn">Unlock Admin Dashboard &rarr;</button>
+    </form>
+    <div style="font-size:12px; color:#7a665c; margin-top:20px; line-height:1.5; background:#fdfaf5; border:1px dashed #d9c9ae; padding:10px 12px; border-radius:8px; text-align:left;">
+      🔑 <b>Main Admin (Owner):</b> You can enter your Master Passcode (default in <code>config.js</code>) to log in instantly.
+    </div>
+  </div>
+
+  <!-- 2. Main Admin Dashboard View -->
+  <div id="dashboard-view" style="display:none;">
+
+    <!-- Read-Only Notice (shown when admin has read-only access) -->
+    <div id="read-only-banner" style="display:none; background:#fffbeb; border:1px solid #fef3c7; border-left:4px solid #f59e0b; padding:12px 18px; border-radius:8px; margin-bottom:20px; font-size:13.5px; color:#92400e;">
+      🛡️ <b>Read-Only Mode:</b> You are signed in as a View-Only admin. You can inspect all bookings, search records, and export CSVs. Verification actions (Approve ID &amp; Confirm Payment) are reserved for Write-access admins.
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Total Bus Seats</div>
+        <div class="kpi-value" id="kpi-total-seats">35</div>
+        <div class="kpi-sub">Sri Kshetra Yalagur</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-title">Confirmed &amp; Verified</div>
+        <div class="kpi-value" id="kpi-confirmed-seats">0</div>
+        <div class="kpi-sub" id="kpi-confirmed-sub">0 Bookings</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-title">ID Verification Pending</div>
+        <div class="kpi-value" id="kpi-id-pending">0</div>
+        <div class="kpi-sub">Awaiting ID review</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-title">Payment Pending</div>
+        <div class="kpi-value" id="kpi-pay-pending">0</div>
+        <div class="kpi-sub">ID verified • Awaiting UPI</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-title">Seats Remaining</div>
+        <div class="kpi-value" id="kpi-seats-left">35</div>
+        <div class="kpi-sub" id="kpi-seats-note">Available for Madhwa youths</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Interested Enquiries</div>
+        <div class="kpi-value" id="kpi-interested-count">0</div>
+        <div class="kpi-sub">Joined WhatsApp Group</div>
+      </div>
+    </div>
+
+    <!-- Controls Bar: Search & Status Filters -->
+    <div class="controls-bar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Search by Booking ID, Name, Phone, Matha, City, Aadhaar, UTR…">
+        <button type="button" id="search-clear-btn" class="search-clear" style="display:none;" title="Clear search">✕</button>
+      </div>
+      <div class="filter-tabs">
+        <button type="button" class="tab-btn active" data-filter="all">
+          All Bookings <span class="badge" id="badge-all">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-filter="id-pending">
+          🛡️ ID Pending <span class="badge" id="badge-id-pending">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-filter="pay-pending">
+          💳 Payment Pending <span class="badge" id="badge-pay-pending">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-filter="confirmed">
+          ✅ Verified <span class="badge" id="badge-confirmed">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-filter="interested">
+          ✋ Interested <span class="badge" id="badge-interested">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bookings Table Card -->
+    <div class="table-card" id="bookings-card">
+      <div class="table-responsive">
+        <table class="admin-table" id="bookings-table">
+          <thead>
+            <tr>
+              <th>ID &amp; Date</th>
+              <th>Pilgrim Details</th>
+              <th>Matha &amp; Gotra</th>
+              <th>Seats &amp; Contribution</th>
+              <th>Valid ID Proof</th>
+              <th>Status</th>
+              <th style="text-align:center;">Admin Actions &amp; Verification</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center; padding:40px; color:#666;">
+                ⏳ Loading registry from Google Sheets…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Interested Inquiries Table Card (Hidden by default, shown when Interested tab is active) -->
+    <div class="table-card" id="interested-card" style="display:none;">
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Full Name</th>
+              <th>Age</th>
+              <th>WhatsApp Phone</th>
+              <th>Gotra</th>
+              <th>Matha</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="interested-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- Action Confirmation Modal Dialog -->
+<div class="modal-overlay" id="action-modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-dialog admin-modal">
+    <button type="button" class="modal-close" id="modal-close-btn">&times;</button>
+    <div id="modal-body-content"></div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="notice-toast" id="toast-msg">
+  <span id="toast-icon">✓</span>
+  <span id="toast-text">Action completed successfully.</span>
+</div>
+
+<script src="config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
