@@ -10,7 +10,7 @@ window.YUV = {
   // Set BOOKINGS_OPEN to:
   //   false -> Marketing mode: Price is hidden, booking wizard is hidden, and "Interested" button is active
   //   true  -> Bookings are LIVE: Registration wizard is active, price is shown, and "Register now" is active!
-  BOOKINGS_OPEN: true,
+  BOOKINGS_OPEN: false,
   BOOKINGS_OPN: true,                  // Support both spellings so it never fails!
   BOOKING_OPEN_DATE_STR: "7th November 2026",
 
