@@ -58,8 +58,8 @@
       <label>Gender <span style="color:var(--red)">*</span>
         <select data-k="p.gender" class="select-input">
           <option value="" ${!get("p.gender") ? "selected" : ""}>Select Gender</option>
-          <option value="Male" ${get("p.gender") === "Male" ? "selected" : ""}>Male (Boys Accommodation)</option>
-          <option value="Female" ${get("p.gender") === "Female" ? "selected" : ""}>Female (Girls Accommodation)</option>
+          <option value="Male" ${get("p.gender") === "Male" ? "selected" : ""}>Male </option>
+          <option value="Female" ${get("p.gender") === "Female" ? "selected" : ""}>Female </option>
         </select>
       </label>
       ${fld("p.mobile", "Mobile number (linked with WhatsApp)", "tel", NUM)}
@@ -79,8 +79,8 @@
         <label>Gender <span style="color:var(--red)">*</span>
           <select data-k="m.${i}.gender" class="select-input" required>
             <option value="" ${!get(`m.${i}.gender`) ? "selected" : ""}>Select Gender</option>
-            <option value="Male" ${get(`m.${i}.gender`) === "Male" ? "selected" : ""}>Male (Boys Accommodation)</option>
-            <option value="Female" ${get(`m.${i}.gender`) === "Female" ? "selected" : ""}>Female (Girls Accommodation)</option>
+            <option value="Male" ${get(`m.${i}.gender`) === "Male" ? "selected" : ""}>Male </option>
+            <option value="Female" ${get(`m.${i}.gender`) === "Female" ? "selected" : ""}>Female </option>
           </select>
         </label>
         ${fld(`m.${i}.mobile`, "Mobile number (linked with WhatsApp)", "tel", NUM)}
