@@ -469,6 +469,8 @@
 
       const cleanMobile = String(b.mobile || "").replace(/\D/g, "");
       const dateFormatted = formatDate(b.timestamp);
+      const payLink = b.payLink || ((typeof C !== "undefined" && C.SITE_URL ? C.SITE_URL : window.location.href.replace(/\/[^\/]*$/, "/")) + "pay.html?id=" + b.id);
+      const waVerifyMsg = `Namaskara ${b.name || "Pilgrim"} 🙏🏻\n\nYour identity verification for the yalgur yatra is complete 🥳.\nWe are just one step away for the time travel to Vrindavan.\n\nComplete your payment using the below link and secure your seat 🙌\n${payLink}\n\nJai Shri Ram 🙏`;
 
       return `
         <tr>
@@ -487,7 +489,7 @@
             <div style="margin-top:4px;">
               <a href="tel:${esc(cleanMobile)}" style="font-size:13px; color:#1e3a8a; text-decoration:none;">📞 ${esc(b.mobile)}</a>
               &bull;
-              <a href="https://wa.me/91${esc(cleanMobile)}?text=Namaskara%20${encodeURIComponent(b.name)}%20from%20Team%20YUVATMA" target="_blank" style="font-size:12px; color:#15803d; font-weight:700; text-decoration:none;">💬 WhatsApp</a>
+              <a href="https://wa.me/91${esc(cleanMobile)}?text=${encodeURIComponent(waVerifyMsg)}" target="_blank" style="font-size:12px; color:#15803d; font-weight:700; text-decoration:none;">💬 WhatsApp</a>
             </div>
             <div style="font-size:12px; color:#666; margin-top:2px;">✉️ ${esc(b.email)}</div>
             ${(b.area || b.city || b.addr) ? `<div style="font-size:12px; color:#777; margin-top:2px;" title="${esc((b.area ? b.area + ', ' : '') + (b.city || b.addr || ''))}">📍 ${esc((b.area ? b.area + ', ' : '') + (b.city || b.addr || ''))}</div>` : ""}
@@ -941,6 +943,10 @@
     const b = allBookings.find(x => x.id === id);
     if (!b) return;
 
+    const cleanMobile = String(b.mobile || "").replace(/\D/g, "");
+    const payLink = b.payLink || ((typeof C !== "undefined" && C.SITE_URL ? C.SITE_URL : window.location.href.replace(/\/[^\/]*$/, "/")) + "pay.html?id=" + b.id);
+    const waVerifyMsg = `Namaskara ${b.name || "Pilgrim"} 🙏🏻\n\nYour identity verification for the yalgur yatra is complete 🥳.\nWe are just one step away for the time travel to Vrindavan.\n\nComplete your payment using the below link and secure your seat 🙌\n${payLink}\n\nJai Shri Ram 🙏`;
+
     openModal(`
       <h2 style="color:var(--red); margin:0 0 16px; border-bottom:1px solid var(--line); padding-bottom:10px;">
         Booking Details: ${esc(b.id)}
@@ -1037,7 +1043,7 @@
       ` : ""}
 
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; border-top:1px solid var(--line); padding-top:16px;">
-        <a href="https://wa.me/91${String(b.mobile || '').replace(/\D/g, '')}?text=Namaskara%20${encodeURIComponent(b.name)}%20from%20Team%20YUVATMA" target="_blank" class="btn ghost" style="color:#15803d; border-color:#bbf7d0;">
+        <a href="https://wa.me/91${cleanMobile}?text=${encodeURIComponent(waVerifyMsg)}" target="_blank" class="btn ghost" style="color:#15803d; border-color:#bbf7d0;">
           💬 Chat on WhatsApp
         </a>
         <button type="button" class="btn" onclick="document.querySelector('#action-modal').classList.remove('active')">
