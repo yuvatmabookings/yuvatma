@@ -313,7 +313,7 @@
 
   // Update KPI counters
   function updateKpis(stats) {
-    const totalCap = C.TOTAL_SEATS || 35;
+    const totalCap = C.TOTAL_SEATS || 36;
     let confirmedSeats = 0;
     let idPendingCount = 0;
     let payPendingCount = 0;

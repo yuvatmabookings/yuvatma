@@ -155,14 +155,15 @@
   // ---------- Dynamic UI Controller for Booking Open vs Prebooking ----------
   function updateBookingStatus() {
     const open = isBookingsOpen();
+    const totalSeats = C.TOTAL_SEATS || 36;
 
     // 1. Top Announcement Bar
     const topBar = $("#top-announcement");
     if (topBar) {
       if (open) {
-        topBar.innerHTML = `<span>🎉 <b>Registrations are LIVE!</b> Exclusively for Madhwa Youths (Age 18–30) • 35 Seats.</span> <a href="#book">Register Your Spot &rarr;</a>`;
+        topBar.innerHTML = `<span>🎉 <b>Registrations are LIVE!</b> Exclusively for Madhwa Youths (Age 18–30) • ${totalSeats} Seats.</span> <a href="#book">Register Your Spot &rarr;</a>`;
       } else {
-        topBar.innerHTML = `<span>📢 <b>YUVATMA GoSeva - 3.0</b> • Exclusively for Madhwa Youths (Age 18–30) • Registrations Open ${esc(C.BOOKING_OPEN_DATE_STR || "7th Nov")} • Limited to 35 Seats</span> <button type="button" id="bar-interested-btn">✋ Interested</button>`;
+        topBar.innerHTML = `<span>📢 <b>YUVATMA GoSeva - 3.0</b> • Exclusively for Madhwa Youths (Age 18–30) • Registrations Open ${esc(C.BOOKING_OPEN_DATE_STR || "7th Nov")} • Limited to ${totalSeats} Seats</span> <button type="button" id="bar-interested-btn">✋ Interested</button>`;
         const barIntBtn = $("#bar-interested-btn");
         if (barIntBtn) barIntBtn.onclick = openInterestedModal;
       }
@@ -205,23 +206,34 @@
       if (heroIntBtn) heroIntBtn.onclick = openInterestedModal;
     }
 
-    // 5. Hero Contribution Fact
+    // 5. Hero Facts (Contribution & Capacity)
     const factPrice = $("#hero-fact-price");
     if (factPrice) {
       const note = typeof C.PRICE_NOTE !== "undefined" ? C.PRICE_NOTE : "(Food + Accommodation + Transport • Payment after ID verification)";
       factPrice.innerHTML = `<b>Contribution</b> ₹${(C.PRICE || 1760).toLocaleString("en-IN")} per person ${note}`.trim();
+    }
+    const heroCap = $("#hero-fact-capacity");
+    if (heroCap) {
+      heroCap.innerHTML = `<b>Capacity</b> Limited to ${totalSeats} Seats Only`;
     }
 
     // 6. Prebooking Banner Details (Sync dynamically with config.js)
     const prebookDesc = $("#prebooking-desc");
     if (prebookDesc) {
       const pr = (C.PRICE || 1760).toLocaleString("en-IN");
-      const seats = C.TOTAL_SEATS || 35;
       const dateStr = C.BOOKING_OPEN_DATE_STR || "Friday, 7th November";
-      prebookDesc.innerHTML = `Official registration for YUVATMA GoSeva - 3.0 opens on <b>${dateStr}</b>. Strictly limited to <b>${seats} seats</b> (Madhwa youth of age 18–30). Contribution: ₹${pr} per person (payment collected only after ID verification).`;
+      prebookDesc.innerHTML = `Official registration for YUVATMA GoSeva - 3.0 opens on <b>${dateStr}</b>. Strictly limited to <b>${totalSeats} seats</b> (Madhwa youth of age 18–30). Contribution: ₹${pr} per person (payment collected only after ID verification).`;
     }
 
-    // 7. Booking Section Controls
+    // 7. Live Seat Section Header & Labels (Sync with config.js)
+    const seatTitleEl = $("#seat-total-title");
+    if (seatTitleEl) seatTitleEl.textContent = totalSeats;
+    const seatCapMaxEl = $("#seat-capacity-max");
+    if (seatCapMaxEl) seatCapMaxEl.textContent = totalSeats;
+    const seatCapFootEl = $("#seat-capacity-foot");
+    if (seatCapFootEl) seatCapFootEl.textContent = totalSeats;
+
+    // 8. Booking Section Controls
     const cardEl = $("#card");
     const bannerEl = $("#prebooking-banner");
     const bookTitle = $("#book-title");
@@ -326,14 +338,20 @@
 
   // ---------- Live Seat Counter ----------
   async function fetchSeats() {
-    const totalCap = C.TOTAL_SEATS || 35;
+    const totalCap = C.TOTAL_SEATS || 36;
     const seatsLeftEl = $("#seats-left-num");
     const seatsBookedEl = $("#seats-booked-num");
     const progressBar = $("#seat-progress-bar");
     const noteEl = $("#seat-status-note");
+    const seatCapMaxEl = $("#seat-capacity-max");
+    const seatCapFootEl = $("#seat-capacity-foot");
+    const seatTitleEl = $("#seat-total-title");
 
     if (seatsLeftEl) seatsLeftEl.textContent = totalCap;
     if (seatsBookedEl) seatsBookedEl.textContent = "0";
+    if (seatCapMaxEl) seatCapMaxEl.textContent = totalCap;
+    if (seatCapFootEl) seatCapFootEl.textContent = totalCap;
+    if (seatTitleEl) seatTitleEl.textContent = totalCap;
 
     if (!C.API_URL || C.API_URL.includes("PASTE_YOUR_APPS_SCRIPT")) return;
 
@@ -350,11 +368,14 @@
       const data = await res.json();
       if (data && data.ok) {
         const booked = Number(data.bookedSeats || 0);
-        const left = typeof data.seatsLeft !== "undefined" ? Number(data.seatsLeft) : Math.max(0, totalCap - booked);
-        const pct = Math.min(100, Math.round((booked / totalCap) * 100));
+        const maxSeats = typeof data.totalSeats !== "undefined" ? Number(data.totalSeats) : totalCap;
+        const left = typeof data.seatsLeft !== "undefined" ? Number(data.seatsLeft) : Math.max(0, maxSeats - booked);
+        const pct = Math.min(100, Math.round((booked / maxSeats) * 100));
 
         if (seatsLeftEl) seatsLeftEl.textContent = left;
         if (seatsBookedEl) seatsBookedEl.textContent = booked;
+        if (seatCapMaxEl) seatCapMaxEl.textContent = maxSeats;
+        if (seatCapFootEl) seatCapFootEl.textContent = maxSeats;
         if (progressBar) {
           progressBar.style.width = pct + "%";
           if (left <= 5) progressBar.style.background = "#b00020";

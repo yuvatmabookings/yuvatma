@@ -3,7 +3,7 @@
 // Deploy as: Deploy > Manage deployments > Edit > New version > Deploy. (Execute as: Me, Who has access: Anyone)
 
 const PRICE = 1760;                                              // Confirmed contribution per person (₹)
-const TOTAL_SEATS = 35;                                          // Total bus capacity
+const TOTAL_SEATS = 36;                                          // Total bus capacity
 const SITE_URL = "https://yuvatmabookings.github.io/yuvatma/";  // Where site is hosted (keep trailing slash)
 const REPLY_TO = "yuvatma.bookings@gmail.com";                  // Replies land here
 const ID_FOLDER_NAME = "YUVATMA ID Proofs";                      // Google Drive folder for ID cards
@@ -482,7 +482,7 @@ function book(d) {
     // Check seat availability
     const stats = computeSeatStats();
     if (stats.seatsLeft <= 0) {
-      return out({ ok: false, error: "Sorry, all 35 seats are already booked! Please contact us on WhatsApp (+91 9739755771) to join the waiting list." });
+      return out({ ok: false, error: "Sorry, all " + TOTAL_SEATS + " seats are already booked! Please contact us on WhatsApp (+91 9739755771) to join the waiting list." });
     }
     if (stats.seatsLeft < d.n) {
       return out({ ok: false, error: "Only " + stats.seatsLeft + " seat(s) remaining. Cannot book for " + d.n + " people. Please reduce group size or contact us on WhatsApp." });
