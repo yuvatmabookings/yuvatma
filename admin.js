@@ -22,6 +22,7 @@
   let allInterested = [];
   let allAdmins = [];
   let currentFilter = "all";
+  let selectedTransportFilter = "all"; // "all" | "bus" | "own"
   let searchQuery = "";
 
   // Elements
@@ -314,48 +315,81 @@
   // Update KPI counters
   function updateKpis(stats) {
     const totalCap = C.TOTAL_SEATS || 36;
-    let confirmedSeats = 0;
-    let idPendingCount = 0;
-    let payPendingCount = 0;
-    let confirmedCount = 0;
+    let busConfirmedSeats = 0;
+    let busIdPendingCount = 0;
+    let busPayPendingCount = 0;
+    let busConfirmedCount = 0;
+    let ownTransportCount = 0;
+    let ownTransportPeople = 0;
+    let busTotalBookings = 0;
 
     allBookings.forEach(b => {
       const st = String(b.status || "");
       const seats = Number(b.people) || 1;
-      if (st === "Confirmed & Verified" || st === "Verified") {
-        confirmedSeats += seats;
-        confirmedCount++;
-      } else if (st.indexOf("ID Verification Pending") > -1) {
-        idPendingCount += seats;
-      } else if (st.indexOf("Payment Pending") > -1) {
-        payPendingCount += seats;
+      const isOwn = b.isOwnTransport || (b.transport && b.transport.toLowerCase().includes("own"));
+
+      if (isOwn) {
+        ownTransportCount++;
+        ownTransportPeople += seats;
+      } else {
+        busTotalBookings++;
+        if (st === "Confirmed & Verified" || st === "Verified") {
+          busConfirmedSeats += seats;
+          busConfirmedCount++;
+        } else if (st.indexOf("ID Verification Pending") > -1) {
+          busIdPendingCount += seats;
+        } else if (st.indexOf("Payment Pending") > -1) {
+          busPayPendingCount += seats;
+        }
       }
     });
 
-    const totalBookedSeats = confirmedSeats + idPendingCount + payPendingCount;
+    const totalBookedSeats = busConfirmedSeats + busIdPendingCount + busPayPendingCount;
     const seatsLeft = Math.max(0, totalCap - totalBookedSeats);
 
     $("#kpi-total-seats").textContent = totalCap;
-    $("#kpi-confirmed-seats").textContent = confirmedSeats;
-    $("#kpi-confirmed-sub").textContent = `${confirmedCount} Bookings confirmed`;
-    $("#kpi-id-pending").textContent = idPendingCount;
-    $("#kpi-pay-pending").textContent = payPendingCount;
+    $("#kpi-confirmed-seats").textContent = busConfirmedSeats;
+    $("#kpi-confirmed-sub").textContent = `${busConfirmedCount} Bookings confirmed`;
+    $("#kpi-id-pending").textContent = busIdPendingCount;
+    $("#kpi-pay-pending").textContent = busPayPendingCount;
     $("#kpi-seats-left").textContent = seatsLeft;
     $("#kpi-interested-count").textContent = allInterested.length;
 
+    const ownKpiVal = $("#kpi-own-transport");
+    if (ownKpiVal) ownKpiVal.textContent = ownTransportPeople;
+    const ownKpiSub = $("#kpi-own-transport-sub");
+    if (ownKpiSub) ownKpiSub.textContent = `${ownTransportCount} Booking(s) • Direct at Yalagur`;
+
     // Badges on tabs
     $("#badge-all").textContent = allBookings.length;
+    const badgeOwn = $("#badge-own-transport");
+    if (badgeOwn) badgeOwn.textContent = ownTransportCount;
     $("#badge-id-pending").textContent = allBookings.filter(b => (b.status || "").indexOf("ID Verification Pending") > -1).length;
     $("#badge-pay-pending").textContent = allBookings.filter(b => (b.status || "").indexOf("Payment Pending") > -1).length;
     $("#badge-confirmed").textContent = allBookings.filter(b => (b.status === "Confirmed & Verified" || b.status === "Verified")).length;
     $("#badge-interested").textContent = allInterested.length;
+
+    // Counts on Mode Switch Bar
+    const cntAll = $("#switch-cnt-all");
+    if (cntAll) cntAll.textContent = allBookings.length;
+    const cntBus = $("#switch-cnt-bus");
+    if (cntBus) cntBus.textContent = busTotalBookings;
+    const cntOwn = $("#switch-cnt-own");
+    if (cntOwn) cntOwn.textContent = ownTransportCount;
   }
 
   // Filter and Search logic
   function getFilteredBookings() {
     return allBookings.filter(b => {
+      const isOwn = b.isOwnTransport || (b.transport && b.transport.toLowerCase().includes("own"));
+
+      // 0. Mode / Transport Switch Filter
+      if (selectedTransportFilter === "bus" && isOwn) return false;
+      if (selectedTransportFilter === "own" && !isOwn) return false;
+
       // 1. Status Filter
       const st = String(b.status || "");
+      if (currentFilter === "own-transport" && !isOwn) return false;
       if (currentFilter === "id-pending" && st.indexOf("ID Verification Pending") === -1) return false;
       if (currentFilter === "pay-pending" && st.indexOf("Payment Pending") === -1) return false;
       if (currentFilter === "confirmed" && st !== "Confirmed & Verified" && st !== "Verified") return false;
@@ -370,6 +404,7 @@
         let matches = (
           String(b.id || "").toLowerCase().includes(q) ||
           String(b.name || "").toLowerCase().includes(q) ||
+          String(b.transport || "").toLowerCase().includes(q) ||
           String(b.email || "").toLowerCase().includes(q) ||
           String(b.mobile || "").toLowerCase().includes(q) ||
           (cleanQ.length >= 3 && String(b.mobile || "").replace(/\D/g, "").includes(cleanQ)) ||
@@ -504,7 +539,12 @@
 
           <!-- 4. Seats & Contribution -->
           <td data-label="Seats &amp; Contribution">
-            <b style="font-size:15px; color:var(--ink);">${b.people} ${b.people > 1 ? "Seats" : "Seat"}</b>
+            <div style="margin-bottom:4px;">
+              ${b.isOwnTransport || (b.transport && b.transport.toLowerCase().includes("own"))
+                ? `<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#f0fdf4; color:#166534; border:1px solid #86efac;">🚗 Own Transport</span>`
+                : `<span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:700; background:#fef3c7; color:#92400e; border:1px solid #fcd34d;">🚌 Sleeper Bus</span>`}
+            </div>
+            <b style="font-size:15px; color:var(--ink);">${b.people} ${b.people > 1 ? "Pilgrims" : "Pilgrim"}</b>
             <div style="font-size:14px; font-weight:700; color:var(--red); margin-top:2px;">${inr(b.total)}</div>
             ${b.members && b.members.length ? `<div style="font-size:11.5px; color:#15803d; margin-top:2px;">+${b.members.length} group member(s)</div>` : ""}
           </td>
@@ -618,24 +658,37 @@
   }
 
   // Tab Switching
-  $$(".tab-btn").forEach(btn => {
+  $$(".filter-tabs .tab-btn").forEach(btn => {
     btn.onclick = () => {
-      $$(".tab-btn").forEach(b => b.classList.remove("active"));
+      $$(".filter-tabs .tab-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       currentFilter = btn.dataset.filter;
 
       const bookingsCard = $("#bookings-card");
       const interestedCard = $("#interested-card");
+      const switchBar = $("#transport-switch-bar");
 
       if (currentFilter === "interested") {
         if (bookingsCard) bookingsCard.style.display = "none";
         if (interestedCard) interestedCard.style.display = "block";
+        if (switchBar) switchBar.style.display = "none";
         renderInterestedTable();
       } else {
         if (bookingsCard) bookingsCard.style.display = "block";
         if (interestedCard) interestedCard.style.display = "none";
+        if (switchBar) switchBar.style.display = "flex";
         renderTable();
       }
+    };
+  });
+
+  // Transport Mode Switch Buttons
+  $$(".trans-switch-btn").forEach(btn => {
+    btn.onclick = () => {
+      $$(".trans-switch-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedTransportFilter = btn.dataset.transport || "all";
+      renderTable();
     };
   });
 
@@ -990,8 +1043,12 @@
           <div class="detail-value">${esc((b.area ? b.area + ", " : "") + (b.city || b.addr || "-"))}</div>
         </div>
         <div class="detail-item">
+          <div class="detail-label">Travel Package</div>
+          <div class="detail-value"><b>${esc(b.transport || "Bus Transport")}</b></div>
+        </div>
+        <div class="detail-item">
           <div class="detail-label">Total Seats &amp; Amount</div>
-          <div class="detail-value">${esc(b.people)} Seat(s) &bull; ${inr(b.total)}</div>
+          <div class="detail-value">${esc(b.people)} Pilgrim(s) &bull; ${inr(b.total)}</div>
         </div>
         <div class="detail-item">
           <div class="detail-label">Assigned Coordinator</div>
@@ -1426,7 +1483,7 @@
 
       const headers = [
         "Booking ID", "Timestamp", "Name", "Age", "Gender", "Mobile", "Email",
-        "Area", "City", "Gotra", "Matha", "ID Type", "ID Number", "ID Document URL",
+        "Transport Mode", "Area", "City", "Gotra", "Matha", "ID Type", "ID Number", "ID Document URL",
         "Parent / Emergency", "Seats", "Total Contribution", "Coordinator Name", "Coordinator Phone",
         "Transaction ID", "Status", "Verified By", "Verified At", "Queries"
       ];
@@ -1441,6 +1498,7 @@
           `"${esc(b.gender || '')}"`,
           `"${esc(b.mobile)}"`,
           `"${esc(b.email)}"`,
+          `"${esc(b.transport || 'Bus Transport')}"`,
           `"${esc((b.area || '').replace(/"/g, '""'))}"`,
           `"${esc((b.city || '').replace(/"/g, '""'))}"`,
           `"${esc(b.gotra || '')}"`,

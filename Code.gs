@@ -2,7 +2,8 @@
 // Paste into: Extensions > Apps Script of your Google Sheet.
 // Deploy as: Deploy > Manage deployments > Edit > New version > Deploy. (Execute as: Me, Who has access: Anyone)
 
-const PRICE = 1760;                                              // Confirmed contribution per person (₹)
+const PRICE = 1760;                                              // Confirmed Sleeper Bus contribution per person (₹)
+const DIRECT_PRICE = 300;                                        // Own Transport / Direct at Yalagur contribution (₹)
 const TOTAL_SEATS = 36;                                          // Total bus capacity
 const SITE_URL = "https://yuvatmabookings.github.io/yuvatma/";  // Where site is hosted (keep trailing slash)
 const REPLY_TO = "yuvatma.bookings@gmail.com";                  // Replies land here
@@ -37,7 +38,8 @@ const H = {
     "Status",
     "Verified By",
     "Verified At",
-    "Notes"
+    "Notes",
+    "Transport"
   ],
   A: ["Booking ID", "Role", "Name", "Age", "Gender", "Mobile", "Gotra", "Matha", "Parent / Contact", "ID Proof Type", "ID Proof Number", "ID Proof Document URL"],
   R: ["Time", "Booking ID", "Reply", "By"],
@@ -382,6 +384,7 @@ function computeSeatStats() {
   let confirmedBooked = 0;
   let idPendingCount = 0;
   let paymentPendingCount = 0;
+  let ownTransportCount = 0;
 
   const lastRow = B.getLastRow();
   if (lastRow > 1) {
@@ -390,14 +393,21 @@ function computeSeatStats() {
       const r = values[i];
       const n = Number(r[2]);
       const status = String(r[22] || "");
+      const transport = String(r[26] || "Bus Transport");
+      const isOwn = transport.toLowerCase().indexOf("own") > -1;
+
       if (!isNaN(n) && n > 0 && status !== "Cancelled" && status !== "Rejected") {
-        totalBooked += n;
-        if (status === "Confirmed & Verified" || status === "Verified") {
-          confirmedBooked += n;
-        } else if (status.indexOf("ID Verification Pending") > -1) {
-          idPendingCount += n;
-        } else if (status.indexOf("Payment Pending") > -1) {
-          paymentPendingCount += n;
+        if (!isOwn) {
+          totalBooked += n;
+          if (status === "Confirmed & Verified" || status === "Verified") {
+            confirmedBooked += n;
+          } else if (status.indexOf("ID Verification Pending") > -1) {
+            idPendingCount += n;
+          } else if (status.indexOf("Payment Pending") > -1) {
+            paymentPendingCount += n;
+          }
+        } else {
+          ownTransportCount += n;
         }
       }
     }
@@ -409,6 +419,7 @@ function computeSeatStats() {
     confirmedSeats: confirmedBooked,
     idPendingSeats: idPendingCount,
     paymentPendingSeats: paymentPendingCount,
+    ownTransportSeats: ownTransportCount,
     seatsLeft: seatsLeft
   };
 }
@@ -422,6 +433,7 @@ function getStats() {
     confirmedSeats: stats.confirmedSeats,
     idPendingSeats: stats.idPendingSeats,
     paymentPendingSeats: stats.paymentPendingSeats,
+    ownTransportSeats: stats.ownTransportSeats,
     seatsLeft: stats.seatsLeft
   });
 }
@@ -461,7 +473,9 @@ function getPayInfo(id) {
             coordinatorName: r[18] || "",
             coordinatorPhone: r[19] || "",
             txn: r[20] || "",
-            status: r[22] || "ID Verification Pending"
+            status: r[22] || "ID Verification Pending",
+            transport: r[26] || "Bus Transport",
+            isOwnTransport: String(r[26] || "").toLowerCase().indexOf("own") > -1
           }
         });
       }
@@ -480,12 +494,15 @@ function book(d) {
   lock.waitLock(20000);
   try {
     // Check seat availability
-    const stats = computeSeatStats();
-    if (stats.seatsLeft <= 0) {
-      return out({ ok: false, error: "Sorry, all " + TOTAL_SEATS + " seats are already booked! Please contact us on WhatsApp (+91 9739755771) to join the waiting list." });
-    }
-    if (stats.seatsLeft < d.n) {
-      return out({ ok: false, error: "Only " + stats.seatsLeft + " seat(s) remaining. Cannot book for " + d.n + " people. Please reduce group size or contact us on WhatsApp." });
+    const isOwnTransport = String(d.transport || "").toLowerCase().indexOf("own") > -1 || d.isDirect === true;
+    if (!isOwnTransport) {
+      const stats = computeSeatStats();
+      if (stats.seatsLeft <= 0) {
+        return out({ ok: false, error: "Sorry, all " + TOTAL_SEATS + " sleeper bus seats are already booked! Please contact us on WhatsApp (+91 9739755771) to join the waiting list, or register with Own Transport to join directly at Yalagur." });
+      }
+      if (stats.seatsLeft < d.n) {
+        return out({ ok: false, error: "Only " + stats.seatsLeft + " bus seat(s) remaining. Cannot book for " + d.n + " people. Please reduce group size or register with Own Transport." });
+      }
     }
 
     const B = tab("Bookings", H.B), A = tab("Attendees", H.A);
@@ -495,7 +512,9 @@ function book(d) {
     const id = "YUV-" + String(num).padStart(4, "0");
 
     const p = d.p;
-    const unitPrice = Number(d.price) || (d.total ? Math.round(Number(d.total) / d.n) : null) || PRICE;
+    const transportType = isOwnTransport ? "Own Transport" : "Bus Transport";
+    const defaultPrice = isOwnTransport ? DIRECT_PRICE : PRICE;
+    const unitPrice = Number(d.price) || (d.total ? Math.round(Number(d.total) / d.n) : null) || defaultPrice;
     const total = Number(d.total) || (d.n * unitPrice);
 
     p.email = clean(p.email);
@@ -547,7 +566,8 @@ function book(d) {
       initialStatus,                  // 22: Status
       "",                             // 23: Verified By
       "",                             // 24: Verified At
-      ""                              // 25: Notes
+      "",                             // 25: Notes
+      transportType                   // 26: Transport Mode
     ].map(safe));
 
     // Primary attendee in Attendees sheet
@@ -602,7 +622,7 @@ function book(d) {
 
     // Send immediate confirmation email: Registration Received & ID Verification in Progress
     try {
-      confirmRegistrationMail(p, id, d.n, total, d.idType || "Aadhaar", d.idNumber || "", matha);
+      confirmRegistrationMail(p, id, d.n, total, d.idType || "Aadhaar", d.idNumber || "", matha, transportType);
     } catch (x) {
       Logger.log("Email dispatch notice: " + x.message);
     }
@@ -642,9 +662,12 @@ function validate(d) {
 }
 
 // Initial Email sent upon registration submission
-function confirmRegistrationMail(p, id, n, total, idType, idNumber, matha) {
+function confirmRegistrationMail(p, id, n, total, idType, idNumber, matha, transport) {
   const subject = "YUVATMA 2026: Registration Received - ID Verification Pending (" + id + ")";
   const location = (p.area ? p.area + ", " : "") + (p.city || "");
+  const travelMode = transport || "Bus Transport";
+  const isOwn = travelMode.toLowerCase().indexOf("own") > -1;
+  const priceNote = isOwn ? "Food + Accommodation + Seva Kits (Own Transport)" : "Food + Accommodation + Transport";
   
   const plainBody =
     "Namaskara " + p.name + ",\n\n" +
@@ -654,8 +677,9 @@ function confirmRegistrationMail(p, id, n, total, idType, idNumber, matha) {
     "- Pilgrim: " + p.name + " (" + (p.gender || "") + ")\n" +
     (location ? "- Location: " + location + "\n" : "") +
     "- Matha: " + (matha || "-") + "\n" +
+    "- Travel / Transport: " + travelMode + "\n" +
     "- Seats Requested: " + n + " (" + (n > 1 ? n + " People" : "1 Person") + ")\n" +
-    "- Total Contribution: ₹" + total + " (Food + Accommodation + Transport)\n" +
+    "- Total Contribution: ₹" + total + " (" + priceNote + ")\n" +
     "- Valid ID Proof: " + idType + " (" + idNumber + ")\n" +
     "- Current Status: ID Verification in Progress\n\n" +
     "ZERO UPFRONT PAYMENT:\n" +
@@ -690,8 +714,9 @@ function confirmRegistrationMail(p, id, n, total, idType, idNumber, matha) {
     "<tr><td style='padding:5px 0;'><b>Pilgrim Name:</b></td><td>" + esc(p.name) + " (" + esc(p.gender || "") + ")</td></tr>" +
     (location ? "<tr><td style='padding:5px 0;'><b>Location:</b></td><td>" + esc(location) + "</td></tr>" : "") +
     "<tr><td style='padding:5px 0;'><b>Matha:</b></td><td>" + esc(matha || "-") + "</td></tr>" +
+    "<tr><td style='padding:5px 0;'><b>Travel / Transport:</b></td><td><b>" + esc(travelMode) + "</b></td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Seats Requested:</b></td><td>" + n + " (" + (n > 1 ? n + " People" : "1 Person") + ")</td></tr>" +
-    "<tr><td style='padding:5px 0;'><b>Total Contribution:</b></td><td style='font-weight:bold;color:#9e1b1f;'>₹" + total + " <span style='font-size:12px;color:#666;'>(Food + Stay + Travel)</span></td></tr>" +
+    "<tr><td style='padding:5px 0;'><b>Total Contribution:</b></td><td style='font-weight:bold;color:#9e1b1f;'>₹" + total + " <span style='font-size:12px;color:#666;'>(" + esc(priceNote) + ")</span></td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Valid ID Proof:</b></td><td>" + esc(idType) + " (" + esc(idNumber) + ")</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Status:</b></td><td style='color:#b45309;font-weight:bold;'>🛡️ ID Verification in Progress</td></tr>" +
     "</table>" +
@@ -731,11 +756,14 @@ function confirmRegistrationMail(p, id, n, total, idType, idNumber, matha) {
 }
 
 // Dispatches Payment Link Email when ID is approved
-function sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, coordName, coordPhone) {
+function sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, coordName, coordPhone, transport) {
   const coordinatorName = coordName || "Vivek Jahagirdar";
   const coordinatorPhone = String(coordPhone || "9739755771").replace(/\D/g, "") || "9739755771";
   const subject = "YUVATMA 2026: ID Verified! Complete Your Payment for " + id;
   const waLink = "https://wa.me/91" + coordinatorPhone + "?text=" + encodeURIComponent("Namaskara " + coordinatorName + ", I have completed the payment for YUVATMA Booking " + id + ". Attaching payment screenshot.");
+  const travelMode = transport || "Bus Transport";
+  const isOwn = travelMode.toLowerCase().indexOf("own") > -1;
+  const priceNote = isOwn ? "Food + Accommodation + Seva Kits (Own Transport)" : "Food + Accommodation + Transport";
 
   const plainBody =
     "Namaskara " + name + ",\n\n" +
@@ -743,8 +771,9 @@ function sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, c
     "PAYMENT DETAILS:\n" +
     "- Booking ID: " + id + "\n" +
     "- Pilgrim: " + name + "\n" +
+    "- Travel / Transport: " + travelMode + "\n" +
     "- Seats Reserved: " + people + " (" + (people > 1 ? people + " People" : "1 Person") + ")\n" +
-    "- Total Contribution: ₹" + total + " (Food + Accommodation + Transport)\n" +
+    "- Total Contribution: ₹" + total + " (" + priceNote + ")\n" +
     "- Assigned Coordinator: " + coordinatorName + " (+91 " + coordinatorPhone + ")\n" +
     "- Payment Portal Link: " + payLink + "\n\n" +
     "HOW TO PAY (2 Simple Steps):\n" +
@@ -770,7 +799,8 @@ function sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, c
     "<tr><td style='padding:5px 0;'><b>Booking ID:</b></td><td style='color:#9e1b1f;font-weight:bold;font-size:16px;font-family:monospace;'>" + id + "</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Pilgrim:</b></td><td>" + esc(name) + "</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Seats Reserved:</b></td><td>" + people + " (" + (people > 1 ? people + " People" : "1 Person") + ")</td></tr>" +
-    "<tr><td style='padding:5px 0;'><b>Total Contribution:</b></td><td style='font-size:17px;font-weight:bold;color:#9e1b1f;'>₹" + total + "</td></tr>" +
+    "<tr><td style='padding:5px 0;'><b>Travel / Transport:</b></td><td><b>" + esc(travelMode) + "</b></td></tr>" +
+    "<tr><td style='padding:5px 0;'><b>Total Contribution:</b></td><td style='font-size:17px;font-weight:bold;color:#9e1b1f;'>₹" + total + " <span style='font-size:12px;color:#666;'>(" + esc(priceNote) + ")</span></td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Assigned Coordinator:</b></td><td><b>" + esc(coordinatorName) + "</b> (+91 " + coordinatorPhone + ")</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Status:</b></td><td style='color:#3b49df;font-weight:bold;'>ID Verified • Payment Pending</td></tr>" +
     "</table>" +
@@ -812,8 +842,10 @@ function sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, c
 }
 
 // Dispatches Confirmed & Verified Email
-function sendVerifiedEmail(email, name, id, people, total) {
+function sendVerifiedEmail(email, name, id, people, total, transport) {
   const subject = "YUVATMA 2026: Booking Confirmed & Verified! (" + id + ")";
+  const travelMode = transport || "Bus Transport";
+  const isOwn = travelMode.toLowerCase().indexOf("own") > -1;
   
   const plainBody =
     "Namaskara " + name + ",\n\n" +
@@ -823,6 +855,7 @@ function sendVerifiedEmail(email, name, id, people, total) {
     "- Booking ID: " + id + "\n" +
     "- Pilgrim: " + name + "\n" +
     "- Confirmed Seats: " + people + " (" + (people > 1 ? people + " Seats" : "1 Seat") + ")\n" +
+    "- Travel / Transport: " + travelMode + "\n" +
     "- Contribution Paid: ₹" + total + " (Verified ✓)\n" +
     "- Dates: November 28–29, 2026 (Saturday & Sunday)\n" +
     "- Venue: Sri Kshetra Yalagur, Nidagundi, Karnataka\n" +
@@ -851,6 +884,7 @@ function sendVerifiedEmail(email, name, id, people, total) {
     "<tr><td style='padding:5px 0;'><b>Booking ID:</b></td><td style='color:#9e1b1f;font-weight:bold;font-size:17px;font-family:monospace;'>" + id + "</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Pilgrim:</b></td><td>" + esc(name) + "</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Confirmed Seats:</b></td><td>" + people + " (" + (people > 1 ? people + " Seats" : "1 Seat") + ")</td></tr>" +
+    "<tr><td style='padding:5px 0;'><b>Travel / Transport:</b></td><td><b>" + esc(travelMode) + "</b></td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Contribution Paid:</b></td><td>₹" + total + " (Verified ✓)</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Dates:</b></td><td>November 28–29, 2026 (Saturday &amp; Sunday)</td></tr>" +
     "<tr><td style='padding:5px 0;'><b>Venue:</b></td><td>Sri Kshetra Yalagur, Nidagundi, Karnataka</td></tr>" +
@@ -971,6 +1005,8 @@ function mine(d) {
       txn: r[20] || "",
       q: r[21] || "",
       status: r[22] || "ID Verification Pending",
+      transport: r[26] || "Bus Transport",
+      isOwnTransport: String(r[26] || "").toLowerCase().indexOf("own") > -1,
       people: att.filter(function (a) { return a[0] === r[1]; }).map(function (a) {
         if (a.length >= 12) {
           return {
@@ -1091,6 +1127,8 @@ function adminList(d) {
       verifiedBy: r[23] || "",
       verifiedAt: r[24] || "",
       notes: r[25] || "",
+      transport: r[26] || "Bus Transport",
+      isOwnTransport: String(r[26] || "").toLowerCase().indexOf("own") > -1,
       members: members
     };
   });
@@ -1145,7 +1183,9 @@ function adminApproveId(d) {
       const rowIndex = i + 2;
       const id = r[1];
       const people = Number(r[2]) || 1;
-      const total = Number(r[3]) || (people * PRICE);
+      const transport = r[26] || "Bus Transport";
+      const isOwn = transport.toLowerCase().indexOf("own") > -1;
+      const total = Number(r[3]) || (people * (isOwn ? DIRECT_PRICE : PRICE));
       const name = r[4];
       const email = r[8];
       const idType = r[13] || "Valid ID";
@@ -1160,7 +1200,7 @@ function adminApproveId(d) {
 
       // Dispatch Payment Link Email
       try {
-        sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, coordName, coordPhone);
+        sendPaymentLinkEmail(email, name, id, people, total, idType, payLink, coordName, coordPhone, transport);
       } catch (err) {
         return out({ ok: false, error: "Status updated in sheet, but email failed: " + err.message });
       }
@@ -1201,7 +1241,9 @@ function adminConfirmPayment(d) {
       const rowIndex = i + 2;
       const id = r[1];
       const people = Number(r[2]) || 1;
-      const total = Number(r[3]) || (people * PRICE);
+      const transport = r[26] || "Bus Transport";
+      const isOwn = transport.toLowerCase().indexOf("own") > -1;
+      const total = Number(r[3]) || (people * (isOwn ? DIRECT_PRICE : PRICE));
       const name = r[4];
       const email = r[8];
 
@@ -1219,7 +1261,7 @@ function adminConfirmPayment(d) {
 
       // Dispatch Confirmed & Verified Email
       try {
-        sendVerifiedEmail(email, name, id, people, total);
+        sendVerifiedEmail(email, name, id, people, total, transport);
       } catch (err) {
         return out({ ok: false, error: "Status updated in sheet, but email failed: " + err.message });
       }

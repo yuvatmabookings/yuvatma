@@ -1,9 +1,12 @@
 (() => {
   const C = window.YUV || {}, $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s), KEY = "yuv26";
-  let S = { i: 0, n: 0, p: {}, m: [{}, {}, {}], pay: {}, q: "" };
+  let S = { i: 0, n: 0, p: {}, m: [{}, {}, {}], pay: {}, q: "", transport: "bus" };
   const uploadedFiles = {};
 
-  try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+  try {
+    S = Object.assign(S, JSON.parse(localStorage.getItem(KEY)) || {});
+    if (!S.transport) S.transport = "bus";
+  } catch (e) {}
 
   // Support both BOOKINGS_OPEN and BOOKINGS_OPN, and handle true/TRUE/"true"/1
   const isBookingsOpen = () => {
@@ -19,7 +22,8 @@
   const esc = v => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const get = k => k.split(".").reduce((o, x) => o && o[x], S) ?? "";
   const set = (k, v) => { const a = k.split("."), l = a.pop(); a.reduce((o, x) => o[x], S)[l] = v; };
-  const total = () => (S.n || 1) * (C.PRICE || 1760);
+  const unitRate = () => (S.transport === "own" ? (C.DIRECT_PRICE || 300) : (C.PRICE || 1760));
+  const total = () => (S.n || 1) * unitRate();
   const steps = () => S.n > 1 ? ["g", "y", "m", "v"] : ["g", "y", "v"];
   const NAMES = { g: "Group", y: "You", m: "Members", v: "ID Verification" };
   const NUM = 'inputmode="numeric" maxlength="10"';
@@ -38,18 +42,45 @@
 
   // Step Views for Live Booking
   const V = {
-    // Step 1: Clean group size selection
-    g: () => `<h3>How many Madhwa youths are coming?</h3>
-      <p class="hint">Select group size to continue (one booking covers up to 4 members, Madhwa youth age 18–30).</p>
-      <div class="sizes">
-        ${[1, 2, 3, 4].map(n => `
-          <button type="button" class="size ${S.n == n ? "on" : ""}" data-n="${n}">
-            <span class="size-badge">${n == 1 ? "👤 Solo" : n == 2 ? "👥 Duo" : n == 3 ? "👨‍👩‍👦 Trio" : "👨‍👩‍👧‍👦 Squad"}</span>
-            <b>${n == 1 ? "Just me" : n + " people"}</b>
-            <span class="size-sub">${n == 1 ? "1 Seat" : n + " Seats"}</span>
-          </button>
-        `).join("")}
-      </div>`,
+    // Step 1: Clean transport package selection & group size selection
+    g: () => {
+      const isOwn = S.transport === "own";
+      const busPrice = C.PRICE || 1760;
+      const directPrice = C.DIRECT_PRICE || 300;
+      return `
+        <div class="transport-selector-card">
+          <div class="transport-selector-title">Select your travel package:</div>
+          <div class="transport-options-grid">
+            <button type="button" class="transport-opt-btn ${!isOwn ? 'selected' : ''}" data-transport="bus">
+              <span class="transport-opt-icon">🚌</span>
+              <div class="transport-opt-info">
+                <b>Sleeper Bus Package</b>
+                <span class="transport-opt-price">${inr(busPrice)} / person</span>
+                <span class="transport-opt-sub">Round-trip Sleeper Bus from Bengaluru + Satvik Meals + Stay + Go Seva</span>
+              </div>
+            </button>
+            <button type="button" class="transport-opt-btn ${isOwn ? 'selected' : ''}" data-transport="own">
+              <span class="transport-opt-icon">🚗</span>
+              <div class="transport-opt-info">
+                <b>Own Transport / Direct</b>
+                <span class="transport-opt-price">${inr(directPrice)} / person</span>
+                <span class="transport-opt-sub">Join directly at Yalagur. Satvik Meals + Stay + Go Seva (No bus)</span>
+              </div>
+            </button>
+          </div>
+        </div>
+        <h3>How many Madhwa youths are coming?</h3>
+        <p class="hint">Select group size to continue (${isOwn ? "Own Transport registration" : "Sleeper Bus package"}, Madhwa youth age 18–30).</p>
+        <div class="sizes">
+          ${[1, 2, 3, 4].map(n => `
+            <button type="button" class="size ${S.n == n ? "on" : ""}" data-n="${n}">
+              <span class="size-badge">${n == 1 ? "👤 Solo" : n == 2 ? "👥 Duo" : n == 3 ? "👨‍👩‍👦 Trio" : "👨‍👩‍👧‍👦 Squad"}</span>
+              <b>${n == 1 ? "Just me" : n + " people"}</b>
+              <span class="size-sub">${n == 1 ? "1 Pilgrim" : n + " Pilgrims"} • ${inr(n * unitRate())}</span>
+            </button>
+          `).join("")}
+        </div>`;
+    },
 
     // Step 2: Personal details
     y: () => `<h3>Your details</h3>
@@ -196,14 +227,37 @@
         heroContainer.innerHTML = `
           <a class="btn" href="#book" id="hero-book-btn">Register your spot</a>
           <button type="button" class="btn ghost" id="hero-interested-btn" style="color:#fff;box-shadow:inset 0 0 0 2px var(--gold)">✋ Join WhatsApp Group</button>
+          <a href="#book" class="hero-direct-link" id="hero-direct-link">🚗 Want to join us directly at Yalagur? &rarr;</a>
         `;
       } else {
         heroContainer.innerHTML = `
           <button type="button" class="btn" id="hero-interested-btn">✋ Interested</button>
+          <a href="#book" class="hero-direct-link" id="hero-direct-link">🚗 Want to join us directly at Yalagur? &rarr;</a>
         `;
       }
       const heroIntBtn = $("#hero-interested-btn");
       if (heroIntBtn) heroIntBtn.onclick = openInterestedModal;
+      const heroDirectLink = $("#hero-direct-link");
+      if (heroDirectLink) {
+        heroDirectLink.onclick = e => {
+          e.preventDefault();
+          S.transport = "own";
+          save();
+          render();
+          jump();
+        };
+      }
+    }
+
+    // Direct Join Front Callout Action
+    const directJoinBtn = $("#direct-join-btn");
+    if (directJoinBtn) {
+      directJoinBtn.onclick = () => {
+        S.transport = "own";
+        save();
+        render();
+        jump();
+      };
     }
 
     // 5. Hero Facts (Contribution & Capacity)
@@ -259,7 +313,11 @@
     const cur = st[S.i];
     $("#steps").innerHTML = st.map((s, i) => `<li class="${i == S.i ? "on" : i < S.i ? "done" : ""}">${NAMES[s]}</li>`).join("");
     $("#stage").innerHTML = V[cur]();
-    $("#total").textContent = S.n && cur != "g" ? `Total Contribution: ${inr(total())} (${S.n} ${S.n > 1 ? "people" : "person"}) • Payment link sent after ID verification` : "";
+    const isOwn = S.transport === "own";
+    const pkgLabel = isOwn ? "Own Transport / Direct at Yalagur" : "Sleeper Bus Package";
+    $("#total").textContent = S.n && cur != "g"
+      ? `Total Contribution: ${inr(total())} (${S.n} ${S.n > 1 ? "pilgrims" : "pilgrim"} • ${pkgLabel}) • Payment link sent after ID verification`
+      : "";
     $("#back").hidden = S.i == 0;
     $("#next").hidden = cur == "g";
     $("#next").textContent = cur == "v" ? "Submit Registration for Verification →" : "Continue";
@@ -651,6 +709,17 @@
   });
 
   document.addEventListener("click", e => {
+    const transBtn = e.target.closest(".transport-opt-btn");
+    if (transBtn) {
+      const t = transBtn.dataset.transport;
+      if (t === "bus" || t === "own") {
+        S.transport = t;
+        save();
+        render();
+      }
+      return;
+    }
+
     const b = e.target.closest(".size");
     if (!b) return;
 
@@ -719,12 +788,19 @@
           membersPayload.push(mem);
         }
 
+        const isOwn = S.transport === "own";
+        const transportType = isOwn ? "Own Transport" : "Bus Transport";
+        const currentRate = unitRate();
+        const currentTotal = S.n * currentRate;
+
         const body = {
           action: "book",
           hp: $("#hp").value,
           n: S.n,
-          price: C.PRICE || 1760,
-          total: S.n * (C.PRICE || 1760),
+          price: currentRate,
+          total: currentTotal,
+          transport: transportType,
+          isDirect: isOwn,
           p: p,
           members: membersPayload,
           matha: (p.matha || "").trim(),
@@ -758,6 +834,7 @@
     const pName = esc(S.p.name);
     const idType = esc(S.p.idType || "Aadhaar");
     const idNum = esc(S.p.idNumber || "");
+    const pkgLabel = S.transport === "own" ? "Own Transport / Direct at Yalagur" : "Sleeper Bus Package";
     try { localStorage.removeItem(KEY); } catch (e) {}
 
     // 1. Update Card display
@@ -769,7 +846,7 @@
         <div style="background:var(--gold-light);border:1px solid var(--line);border-radius:10px;padding:14px;margin:16px 0;text-align:left;">
           <p style="margin:0 0 6px 0;font-weight:700;color:var(--ink);">🛡️ Valid ID Verification in Progress</p>
           <p style="margin:0;font-size:14px;color:var(--ink-light);line-height:1.5;">
-            Thank you, <b>${pName}</b>! We have recorded your registration, Matha (<b>${esc(S.p.matha || "")}</b>), and valid ID proof (<b>${idType}: ${idNum}</b>).
+            Thank you, <b>${pName}</b>! We have recorded your registration for <b>${pkgLabel}</b>, Matha (<b>${esc(S.p.matha || "")}</b>), and valid ID proof (<b>${idType}: ${idNum}</b>).
             A confirmation email has been dispatched to <b>${mail}</b>.
           </p>
         </div>

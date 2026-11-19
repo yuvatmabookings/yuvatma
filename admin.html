@@ -793,6 +793,11 @@ table.admin-table tr:hover td {
         <div class="kpi-value" id="kpi-seats-left">36</div>
         <div class="kpi-sub" id="kpi-seats-note">Available for Madhwa youths</div>
       </div>
+      <div class="kpi-card" id="kpi-own-transport-card" style="border-top: 4px solid #16a34a;">
+        <div class="kpi-title">🚗 Own Transport</div>
+        <div class="kpi-value" id="kpi-own-transport">0</div>
+        <div class="kpi-sub" id="kpi-own-transport-sub">0 Bookings • Direct at Yalagur</div>
+      </div>
       <div class="kpi-card">
         <div class="kpi-title">Interested Enquiries</div>
         <div class="kpi-value" id="kpi-interested-count">0</div>
@@ -811,6 +816,9 @@ table.admin-table tr:hover td {
         <button type="button" class="tab-btn active" data-filter="all">
           All Bookings <span class="badge" id="badge-all">0</span>
         </button>
+        <button type="button" class="tab-btn" data-filter="own-transport">
+          🚗 Own Transport <span class="badge" id="badge-own-transport">0</span>
+        </button>
         <button type="button" class="tab-btn" data-filter="id-pending">
           🛡️ ID Pending <span class="badge" id="badge-id-pending">0</span>
         </button>
@@ -824,6 +832,20 @@ table.admin-table tr:hover td {
           ✋ Interested <span class="badge" id="badge-interested">0</span>
         </button>
       </div>
+    </div>
+
+    <!-- Transport Mode Switch Bar -->
+    <div class="transport-switch-bar" id="transport-switch-bar" style="display:flex; align-items:center; gap:8px; margin-bottom:14px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 14px; flex-wrap:wrap;">
+      <span style="font-size:13px; font-weight:700; color:var(--ink-light); text-transform:uppercase; letter-spacing:0.5px;">Mode:</span>
+      <button type="button" class="tab-btn trans-switch-btn active" data-transport="all">
+        🌐 All Bookings (<span id="switch-cnt-all">0</span>)
+      </button>
+      <button type="button" class="tab-btn trans-switch-btn" data-transport="bus">
+        🚌 Sleeper Bus (<span id="switch-cnt-bus">0</span>)
+      </button>
+      <button type="button" class="tab-btn trans-switch-btn" data-transport="own" style="border-color:#86efac; color:#166534;">
+        🚗 Own Transport (<span id="switch-cnt-own">0</span>)
+      </button>
     </div>
 
     <!-- Bookings Table Card -->

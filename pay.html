@@ -407,10 +407,13 @@
     const isVerified = b.status === "Confirmed & Verified" || b.status === "Verified";
     const isIdPending = b.status === "ID Verification Pending" || b.status === "Pending ID Verification";
     
-    // Dynamic price from config.js or sheet
-    const unitPrice = Number(C.PRICE) || (b.total && b.people ? Math.round(b.total / b.people) : 1760);
-    const totalAmt = (b.people || 1) * unitPrice;
+    // Dynamic price calculation
+    const isOwnTransport = b.isOwnTransport || String(b.transport || "").toLowerCase().indexOf("own") > -1;
+    const defaultPrice = isOwnTransport ? (Number(C.DIRECT_PRICE) || 300) : (Number(C.PRICE) || 1760);
+    const totalAmt = Number(b.total) || ((b.people || 1) * defaultPrice);
+    const unitPrice = (b.people && totalAmt) ? Math.round(totalAmt / b.people) : defaultPrice;
     const peopleStr = b.people ? `${b.people} ${b.people > 1 ? "Seats" : "Seat"}` : "1 Seat";
+    const transportLabel = isOwnTransport ? "🚗 Direct at Yalagur (Own Transport)" : "🚌 Sleeper Bus from Bengaluru";
 
     // Coordinator details: check booking data or URL parameters (passed when admin approved ID)
     const urlParams = new URLSearchParams(window.location.search);
@@ -446,12 +449,13 @@
         <table class="booking-summary-table">
           <tr><td>Booking ID</td><td>${esc(b.id)}</td></tr>
           <tr><td>Pilgrim Name</td><td>${esc(b.name)}</td></tr>
+          <tr><td>Travel Option</td><td><b>${esc(transportLabel)}</b></td></tr>
           <tr><td>Seats Confirmed</td><td>${esc(peopleStr)}</td></tr>
           <tr><td>Total Contribution</td><td>${inr(totalAmt)} (Verified)</td></tr>
         </table>
         <div style="background:var(--leaf-light); border:1px solid var(--leaf); border-radius:10px; padding:16px; margin:18px 0; text-align:center;">
           <p style="margin:0; font-weight:700; color:var(--leaf); font-size:16px;">Your registration and payment have been confirmed!</p>
-          <p style="margin:8px 0 0; font-size:14px; color:var(--ink);">Bus boarding points, departure timings, and itinerary updates will be shared in our official WhatsApp group.</p>
+          <p style="margin:8px 0 0; font-size:14px; color:var(--ink);">${isOwnTransport ? "Clean accommodation for boys & girls is arranged at Yalagur. Reporting time and itinerary updates will be shared in our official WhatsApp group." : "Bus boarding points, departure timings, and itinerary updates will be shared in our official WhatsApp group."}</p>
         </div>
         <div style="text-align:center; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
           <a href="my-booking.html" class="btn">View in 'My Booking'</a>
@@ -471,6 +475,7 @@
         <table class="booking-summary-table">
           <tr><td>Booking ID</td><td>${esc(b.id)}</td></tr>
           <tr><td>Pilgrim Name</td><td>${esc(b.name)}</td></tr>
+          <tr><td>Travel Option</td><td><b>${esc(transportLabel)}</b></td></tr>
           <tr><td>Seats Requested</td><td>${esc(peopleStr)}</td></tr>
           <tr><td>Expected Contribution</td><td>${inr(totalAmt)}</td></tr>
         </table>
@@ -500,13 +505,14 @@
         <tr><td>Booking ID</td><td>${esc(b.id)}</td></tr>
         <tr><td>Pilgrim Name</td><td>${esc(b.name)}</td></tr>
         ${b.matha ? `<tr><td>Matha</td><td>${esc(b.matha)}</td></tr>` : ""}
+        <tr><td>Travel Option</td><td><b>${esc(transportLabel)}</b></td></tr>
         <tr><td>Seats Reserved</td><td>${esc(peopleStr)}</td></tr>
       </table>
 
       <div class="amount-highlight-box">
         <div class="amt-sub">Total Amount to Pay</div>
         <div class="amt-val">${inr(totalAmt)}</div>
-        <div style="font-size:13px; color:var(--ink-light);">₹${unitPrice.toLocaleString("en-IN")} &times; ${b.people || 1} Person(s)</div>
+        <div style="font-size:13px; color:var(--ink-light);">₹${unitPrice.toLocaleString("en-IN")} &times; ${b.people || 1} Person(s) ${isOwnTransport ? "(Own Transport)" : "(Sleeper Bus Included)"}</div>
       </div>
 
       <!-- Step 1: Open Any UPI App or Pay to UPI ID -->

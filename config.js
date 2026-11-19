@@ -15,8 +15,10 @@ window.YUV = {
   BOOKING_OPEN_DATE_STR: "7th November 2026",
 
   // 3. Trip & Eligibility
-  PRICE: 1760,                         // Confirmed contribution per person (₹) - configurable
+  PRICE: 1760,                         // Sleeper Bus package contribution per person (₹) - configurable
+  DIRECT_PRICE: 300,                   // Own Transport / Direct at Yalagur contribution per person (₹) - configurable
   PRICE_NOTE: "(Food + Accommodation + Transport)", // Subtitle / note shown in hero section
+  DIRECT_PRICE_NOTE: "(Food + Accommodation + Seva Kits • Own Transport)",
   TOTAL_SEATS: 36,                      // Total bus seat capacity (live tracked)
   AGE_MIN: 18,                          // Age limit minimum
   AGE_MAX: 30,                          // Age limit maximum

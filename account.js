@@ -153,6 +153,7 @@
     return `<article class="bk"><h3>${esc(b.id)} <span class="pill ${pillClass}">${esc(label)}</span></h3>
       <dl>
         <dt>Seats</dt><dd>${esc(b.n)} People</dd>
+        <dt>Travel Mode</dt><dd><b>${esc(b.transport || "Bus Transport")}</b></dd>
         <dt>Total Amount</dt><dd>₹${Number(b.total).toLocaleString("en-IN")}</dd>
         <dt>Primary Pilgrim</dt><dd>${esc(b.name)}, ${esc(b.age)} yrs &bull; ${esc(b.gender || "Madhwa Youth")}</dd>
         <dt>WhatsApp Mobile</dt><dd>${esc(b.mobile)}</dd>
