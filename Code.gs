@@ -56,7 +56,7 @@ function doGet(e) {
       return getStats();
     }
     if (action === "payInfo") {
-      return getPayInfo(e.parameter.id);
+      return getPayInfo(e.parameter.id, e.parameter.key, e.parameter.token);
     }
     if (action === "adminList") {
       return adminList({
@@ -86,7 +86,7 @@ function doPost(e) {
   try {
     switch (d.action || "book") {
       case "book": return book(d);
-      case "payInfo": return getPayInfo(d.id);
+      case "payInfo": return getPayInfo(d.id, d.key, d.token);
       case "interested": return recordInterested(d);
       case "seats":
       case "stats": return getStats();
@@ -438,10 +438,11 @@ function getStats() {
   });
 }
 
-// ---------- Payment Info Lookup for pay.html ----------
-function getPayInfo(id) {
+// ---------- Secure Payment Info Lookup for pay.html ----------
+function getPayInfo(id, key, token) {
   if (!id) return out({ ok: false, error: "Missing Booking ID." });
   const cleanId = String(id).trim().toUpperCase();
+  const cleanKey = String(key || "").trim();
   const B = tab("Bookings", H.B);
   const lastRow = B.getLastRow();
   if (lastRow > 1) {
@@ -449,33 +450,49 @@ function getPayInfo(id) {
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       if (String(r[1]).trim().toUpperCase() === cleanId) {
+        const pilgrimEmail = clean(r[8]);
+        const expectedKey = computePayKey(cleanId, pilgrimEmail);
+
+        // Authorization check:
+        // 1. Matches cryptographic payKey sent in verified email/WhatsApp
+        // 2. OR caller has an active authenticated session for this email from 'My Booking'
+        // 3. OR caller is an active authenticated Admin
+        let authorized = (cleanKey && cleanKey === expectedKey);
+        if (!authorized && token) {
+          const sEmail = sessionEmail(token);
+          if (sEmail && sEmail === pilgrimEmail) {
+            authorized = true;
+          } else if (getAdminFromSession(token, cleanKey)) {
+            authorized = true;
+          }
+        }
+
+        if (!authorized) {
+          return out({
+            ok: false,
+            error: "Access Denied: Please use the official payment link sent to your registered Email/WhatsApp, or log in securely via 'My Booking'."
+          });
+        }
+
+        const isOwn = String(r[26] || "").toLowerCase().indexOf("own") > -1;
+        const defaultRate = isOwn ? DIRECT_PRICE : PRICE;
+        const peopleCount = Number(r[2]) || 1;
+        const totalAmount = Number(r[3]) || (peopleCount * defaultRate);
+
+        // STRICT PII SANITIZATION:
+        // NEVER return idNumber, idDocUrl, mobile, email, contact, addr, gotra to public payment view!
         return out({
           ok: true,
           booking: {
             id: r[1],
-            people: Number(r[2]) || 1,
-            total: Number(r[3]) || PRICE,
-            name: r[4] || "Pilgrim",
-            age: r[5],
-            gender: r[6] || "",
-            mobile: r[7],
-            email: r[8],
-            area: r[9] || "",
-            city: r[10] || "",
-            addr: (r[9] ? r[9] + ", " : "") + (r[10] || ""),
-            gotra: r[11] || "",
-            matha: r[12] || "",
-            idType: r[13] || "Aadhaar",
-            idNumber: r[14] || "",
-            idDocUrl: r[15] || "",
-            contact: r[16],
-            payLink: r[17] || "",
-            coordinatorName: r[18] || "",
-            coordinatorPhone: r[19] || "",
-            txn: r[20] || "",
+            people: peopleCount,
+            total: totalAmount,
+            name: maskName(r[4] || "Pilgrim"),
             status: r[22] || "ID Verification Pending",
             transport: r[26] || "Bus Transport",
-            isOwnTransport: String(r[26] || "").toLowerCase().indexOf("own") > -1
+            isOwnTransport: isOwn,
+            coordinatorName: r[18] || "",
+            coordinatorPhone: r[19] || ""
           }
         });
       }
@@ -535,8 +552,9 @@ function book(d) {
       }
     }
 
-    // Direct Payment link generated for pilgrim
-    const payLink = SITE_URL + "pay.html?id=" + id;
+    // Direct Payment link generated for pilgrim (with tamper-proof security key)
+    const payKey = computePayKey(id, p.email);
+    const payLink = SITE_URL + "pay.html?id=" + encodeURIComponent(id) + "&key=" + payKey;
     const initialStatus = "ID Verification Pending";
 
     // Row layout matching H.B
@@ -920,6 +938,15 @@ function sendVerifiedEmail(email, name, id, people, total, transport) {
 function sendCode(d) {
   const email = clean(d.email), c = CacheService.getScriptCache();
   if (!/^\S+@\S+\.\S+$/.test(email)) return out({ ok: false, error: "Enter a valid email address." });
+
+  // STRICT CHECK: Email must exist in Bookings sheet!
+  if (!hasBooking(email)) {
+    return out({
+      ok: false,
+      error: "No booking found with this email address. Please check your spelling or register first."
+    });
+  }
+
   if (c.get("cd:" + email)) return out({ ok: false, error: "Please wait a minute before asking for another code." });
   c.put("cd:" + email, "1", 60);
 
@@ -929,25 +956,24 @@ function sendCode(d) {
 
   if (MailApp.getRemainingDailyQuota() < 2) return out({ ok: false, error: "Daily email limit reached. Please contact us on WhatsApp." });
 
-  if (hasBooking(email)) {
-    const code = String(parseInt(Utilities.getUuid().replace(/-/g, "").slice(0, 8), 16) % 900000 + 100000);
-    c.put("otp:" + email, JSON.stringify({ h: hash(code), t: 0 }), CODE_MINUTES * 60);
-    const plainBody =
-      "Namaskara Madhwa Youths,\n\n" +
-      "Your YUVATMA login code is: " + code + "\n\n" +
-      "This code is valid for " + CODE_MINUTES + " minutes.\n\n" +
-      "Note: If this email landed in your Spam/Junk folder, please tap 'Report not spam' so you don't miss important trip updates.\n\n" +
-      "Team YUVATMA - Yalagur Yatra";
+  const code = String(parseInt(Utilities.getUuid().replace(/-/g, "").slice(0, 8), 16) % 900000 + 100000);
+  c.put("otp:" + email, JSON.stringify({ h: hash(code), t: 0 }), CODE_MINUTES * 60);
+  const plainBody =
+    "Namaskara Madhwa Youths,\n\n" +
+    "Your YUVATMA login code is: " + code + "\n\n" +
+    "This code is valid for " + CODE_MINUTES + " minutes.\n\n" +
+    "Note: If this email landed in your Spam/Junk folder, please tap 'Report not spam' so you don't miss important trip updates.\n\n" +
+    "Team YUVATMA - Yalagur Yatra";
 
-    MailApp.sendEmail({
-      to: email,
-      replyTo: REPLY_TO,
-      name: "Team YUVATMA - Yalagur Yatra",
-      subject: "Your YUVATMA login code: " + code,
-      body: plainBody,
-      htmlBody: "<p>Namaskara Madhwa Youths 🙏</p><p>Your YUVATMA login code is: <b style='font-size:24px;letter-spacing:4px;color:#9e1b1f;background:#fef4e2;padding:4px 10px;border-radius:6px;border:1px solid #d9c9ae;display:inline-block;'>" + code + "</b></p><p>This code is valid for " + CODE_MINUTES + " minutes.</p><p style='font-size:12px;color:#777;'>If you did not request this login, please ignore this email.</p><p>Team YUVATMA</p>"
-    });
-  }
+  MailApp.sendEmail({
+    to: email,
+    replyTo: REPLY_TO,
+    name: "Team YUVATMA - Yalagur Yatra",
+    subject: "Your YUVATMA login code: " + code,
+    body: plainBody,
+    htmlBody: "<p>Namaskara Madhwa Youths 🙏</p><p>Your YUVATMA login code is: <b style='font-size:24px;letter-spacing:4px;color:#9e1b1f;background:#fef4e2;padding:4px 10px;border-radius:6px;border:1px solid #d9c9ae;display:inline-block;'>" + code + "</b></p><p>This code is valid for " + CODE_MINUTES + " minutes.</p><p style='font-size:12px;color:#777;'>If you did not request this login, please ignore this email.</p><p>Team YUVATMA</p>"
+  });
+
   return out({ ok: true });
 }
 
@@ -978,8 +1004,22 @@ function mine(d) {
   const email = sessionEmail(d.token);
   if (!email) return out({ ok: false, error: "expired" });
   const att = rows(tab("Attendees", H.A)), rep = rows(tab("Replies", H.R));
-  const list = rows(tab("Bookings", H.B)).filter(function (r) {
-    return String(r[8]).toLowerCase() === email;
+  const B = tab("Bookings", H.B);
+  const bRows = rows(B);
+  let emailColIdx = 8;
+  const lastCol = B.getLastColumn();
+  if (lastCol > 0) {
+    const head = B.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (let c = 0; c < head.length; c++) {
+      const h = String(head[c] || "").trim().toLowerCase();
+      if (h === "email" || h === "email address" || h === "mail" || h === "email id") {
+        emailColIdx = c;
+        break;
+      }
+    }
+  }
+  const list = bRows.filter(function (r) {
+    return clean(r[emailColIdx]) === email;
   }).map(function (r) {
     return {
       id: r[1],
@@ -999,7 +1039,12 @@ function mine(d) {
       idNumber: r[14] || "",
       idUrl: r[15] || "",
       contact: r[16],
-      payLink: r[17] || (SITE_URL + "pay.html?id=" + r[1]),
+      payLink: (function() {
+        const pk = computePayKey(r[1], r[8]);
+        let link = r[17] || (SITE_URL + "pay.html?id=" + encodeURIComponent(r[1]));
+        if (!link.includes("key=")) link += (link.includes("?") ? "&key=" : "?key=") + pk;
+        return link;
+      })(),
       coordinatorName: r[18] || "",
       coordinatorPhone: r[19] || "",
       txn: r[20] || "",
@@ -1118,7 +1163,12 @@ function adminList(d) {
       idNumber: r[14] || "",
       idDocUrl: r[15] || "",
       contact: r[16],
-      payLink: r[17] || (SITE_URL + "pay.html?id=" + r[1]),
+      payLink: (function() {
+        const pk = computePayKey(r[1], r[8]);
+        let link = r[17] || (SITE_URL + "pay.html?id=" + encodeURIComponent(r[1]));
+        if (!link.includes("key=")) link += (link.includes("?") ? "&key=" : "?key=") + pk;
+        return link;
+      })(),
       coordinatorName: r[18] || "",
       coordinatorPhone: r[19] || "",
       txn: r[20] || "",
@@ -1189,7 +1239,8 @@ function adminApproveId(d) {
       const name = r[4];
       const email = r[8];
       const idType = r[13] || "Valid ID";
-      const payLink = SITE_URL + "pay.html?id=" + encodeURIComponent(id) + "&cphone=" + encodeURIComponent(coordPhone) + "&cname=" + encodeURIComponent(coordName);
+      const payKey = computePayKey(id, email);
+      const payLink = SITE_URL + "pay.html?id=" + encodeURIComponent(id) + "&key=" + payKey + "&cphone=" + encodeURIComponent(coordPhone) + "&cname=" + encodeURIComponent(coordName);
 
       // Col 18: Payment Link, Col 19: Coordinator Name, Col 20: Coordinator Phone
       // Col 23: Status, Col 24: Verified By, Col 25: Verified At
@@ -1383,7 +1434,8 @@ function sendPaymentLinkSelected() {
   // Assign coordinator from active user email or script property
   const coordName = Session.getActiveUser().getEmail().split("@")[0] || "Vivek Jahagirdar";
   const coordPhone = PropertiesService.getScriptProperties().getProperty("admin_phone") || "9739755771";
-  const payLink = SITE_URL + "pay.html?id=" + encodeURIComponent(id) + "&cphone=" + encodeURIComponent(coordPhone) + "&cname=" + encodeURIComponent(coordName);
+  const payKey = computePayKey(id, email);
+  const payLink = SITE_URL + "pay.html?id=" + encodeURIComponent(id) + "&key=" + payKey + "&cphone=" + encodeURIComponent(coordPhone) + "&cname=" + encodeURIComponent(coordName);
 
   if (!email || !email.includes("@")) {
     ui.alert("No valid email found in row " + x.r + ".");
@@ -1503,7 +1555,34 @@ function sessionEmail(t) {
 }
 
 function hasBooking(email) {
-  return rows(tab("Bookings", H.B)).some(function (r) { return String(r[8]).toLowerCase() === email; });
+  if (!email) return false;
+  const target = clean(email);
+  const B = tab("Bookings", H.B);
+  const lastRow = B.getLastRow();
+  const lastCol = B.getLastColumn();
+  if (lastRow <= 1 || lastCol < 1) return false;
+
+  // Dynamically find the Email column index from row 1 headers
+  const headers = B.getRange(1, 1, 1, lastCol).getValues()[0];
+  let emailCol = -1;
+  for (let c = 0; c < headers.length; c++) {
+    const h = String(headers[c] || "").trim().toLowerCase();
+    if (h === "email" || h === "email address" || h === "mail" || h === "email id") {
+      emailCol = c + 1; // 1-based index
+      break;
+    }
+  }
+  // Fallback to column 9 (or column 8) if header was not found
+  if (emailCol === -1) emailCol = 9;
+
+  const data = B.getRange(2, emailCol, lastRow - 1, 1).getValues();
+  for (let i = 0; i < data.length; i++) {
+    const val = clean(data[i][0]);
+    if (val && val === target) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function rows(s) {
@@ -1515,6 +1594,16 @@ function rows(s) {
 function tab(name, head) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let s = ss.getSheetByName(name);
+  if (!s) {
+    // Check case-insensitively and trimmed
+    const sheets = ss.getSheets();
+    for (let i = 0; i < sheets.length; i++) {
+      if (sheets[i].getName().trim().toLowerCase() === name.trim().toLowerCase()) {
+        s = sheets[i];
+        break;
+      }
+    }
+  }
   if (!s) {
     s = ss.insertSheet(name);
     s.setFrozenRows(1);
@@ -1609,6 +1698,24 @@ function hash(s) {
   return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s + salt()));
 }
 
+function computePayKey(id, email) {
+  const cleanId = String(id || "").trim().toUpperCase();
+  const cleanEmail = clean(email);
+  return Utilities.base64Encode(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, cleanId + ":" + cleanEmail + ":" + salt())
+  ).replace(/[^a-zA-Z0-9]/g, "").slice(0, 16);
+}
+
+function maskName(name) {
+  if (!name) return "Pilgrim";
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length === 1) {
+    const f = parts[0];
+    return f.length > 2 ? f.slice(0, 2) + "***" : f;
+  }
+  return parts[0] + " " + parts[parts.length - 1].charAt(0).toUpperCase() + "***";
+}
+
 function me() {
   return Session.getActiveUser().getEmail() || "team";
 }
@@ -1629,4 +1736,13 @@ function esc(s) {
 
 function out(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------- Quick Diagnostics & Self-Test Functions ----------
+// Run this directly from the Apps Script editor (Select function > Run) to verify!
+function testSendCodeUnregistered() {
+  const dummyEmail = "unregistered_test_" + Date.now() + "@example.com";
+  Logger.log("Testing unregistered email: " + dummyEmail);
+  const res = sendCode({ email: dummyEmail });
+  Logger.log("Response Output: " + res.getContent());
 }

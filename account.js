@@ -52,9 +52,12 @@
       const b = $("#f .btn");
       b.disabled = true;
       b.textContent = "Sending code…";
+      msg("");
       try {
         const j = await post({ action: "sendCode", email });
-        if (!j.ok) throw new Error(j.error);
+        if (!j || !j.ok) {
+          throw new Error((j && j.error) ? j.error : "No booking found with this email address. Please check your spelling or register first.");
+        }
         code();
       } catch (x) {
         msg(fix(x));
@@ -65,7 +68,7 @@
   }
 
   function code() {
-    $("#sub").textContent = `If ${email} has a registered booking, we've emailed a 6-digit code. Please check your spam folder too.`;
+    $("#sub").textContent = `We've emailed a 6-digit login code to ${email}. Please check your inbox and spam folder.`;
     box(`<form id="f"><label>6-digit code<input id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></label>
       <p class="err" id="err" role="alert"></p><button class="btn" style="width:100%">View my booking</button>
       <p style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap"><button type="button" class="link" id="rs"></button><button type="button" class="link" id="ch">Use a different email</button></p></form>`);
@@ -138,6 +141,12 @@
     const isIdPending = b.status === "ID Verification Pending" || b.status === "Pending ID Verification" || b.status === "Pending";
     const isPayPending = b.status === "Payment Pending (ID Verified)" || b.status === "Payment Pending";
 
+    const userTok = localStorage.getItem(TK) || "";
+    let payHref = b.payLink || ('pay.html?id=' + encodeURIComponent(b.id));
+    if (userTok && !payHref.includes("token=")) {
+      payHref += (payHref.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(userTok);
+    }
+
     let label = b.status;
     let pillClass = "";
     if (isVerified) {
@@ -170,7 +179,7 @@
         <div style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:10px; padding:14px; margin:14px 0;">
           <b style="color:#3730a3;">ID Proof Verified!</b>
           <p style="margin:4px 0 10px; font-size:14px; color:#1e1b4b;">Please proceed to pay via PhonePe / any UPI app and send your screenshot to ${b.coordinatorName ? `coordinator <b>${esc(b.coordinatorName)}</b>` : 'our WhatsApp'}:</p>
-          <a href="${esc(b.payLink || ('pay.html?id=' + encodeURIComponent(b.id)))}" class="btn" style="display:inline-block;">🟣 Open Payment Portal (PhonePe / UPI) &rarr;</a>
+          <a href="${esc(payHref)}" class="btn" style="display:inline-block;">🟣 Open Payment Portal (PhonePe / UPI) &rarr;</a>
         </div>
       ` : ""}
 

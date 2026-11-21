@@ -300,6 +300,8 @@
 
   const urlParams = new URLSearchParams(window.location.search);
   const bookingIdParam = (urlParams.get("id") || "").trim().toUpperCase();
+  const payKeyParam = (urlParams.get("key") || "").trim();
+  const tokenParam = (urlParams.get("token") || localStorage.getItem("yuv_tok") || "").trim();
 
   const upiId = C.UPI_ID || "328511380177528@cnrb";
   const upiName = C.UPI_NAME || "YUVATMA";
@@ -321,84 +323,74 @@
       if (C.API_URL && !C.API_URL.includes("PASTE_YOUR_APPS_SCRIPT")) {
         const res = await fetch(C.API_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "payInfo", id: id })
+          body: JSON.stringify({
+            action: "payInfo",
+            id: id,
+            key: payKeyParam,
+            token: tokenParam
+          })
         });
         const data = await res.json();
         if (data && data.ok && data.booking) {
           booking = data.booking;
         } else if (data && !data.ok && data.error) {
-          renderNotFound(box, id, data.error);
+          renderAccessDenied(box, id, data.error);
           return;
         }
       }
 
-      // If offline or dev fallback
       if (!booking) {
-        const uPrice = Number(C.PRICE) || 1760;
-        booking = {
-          id: id,
-          name: "Pilgrim",
-          people: 1,
-          total: uPrice,
-          status: "Payment Pending (ID Verified)",
-          idType: "Aadhaar"
-        };
+        renderAccessDenied(box, id, "Unable to access booking details. Please verify your link or log in.");
+        return;
       }
 
       renderPaymentPage(box, booking);
     } catch (err) {
-      const uPrice = Number(C.PRICE) || 1760;
-      renderPaymentPage(box, {
-        id: id,
-        name: "Pilgrim",
-        people: 1,
-        total: uPrice,
-        status: "Payment Pending (ID Verified)"
-      });
+      renderAccessDenied(box, id, "Network error: Could not verify booking access. Please try again.");
     }
   }
 
   function renderLookup(box) {
     box.innerHTML = `
       <div class="pay-header">
-        <span style="font-size:2.8rem">💳</span>
+        <span style="font-size:3rem">🛡️</span>
         <h2>YUVATMA Payment Portal</h2>
-        <p style="color:var(--ink-light);margin-top:4px;">Enter your Booking ID to view payment options &amp; send screenshot.</p>
+        <p style="color:var(--ink-light);margin-top:6px;line-height:1.5;">
+          To safeguard pilgrim privacy, payments are accessed via your official verified link or through your authenticated account.
+        </p>
       </div>
-      <form id="lookup-f">
-        <label>Enter Booking ID (e.g. YUV-0001)
-          <div class="lookup-form">
-            <input type="text" id="lookup-id" placeholder="YUV-0001" autocomplete="off" required>
-            <button type="submit" class="btn">Search</button>
-          </div>
-        </label>
-      </form>
-      <div style="text-align:center;margin-top:20px;">
-        <p style="font-size:14px;color:var(--ink-light);">Don't have your Booking ID? Check your registration email or <a href="my-booking.html">log in to 'My Booking'</a>.</p>
+      <div style="background:#fdfaf5; border:1px solid var(--line); border-radius:10px; padding:20px 16px; margin:20px 0; text-align:center;">
+        <p style="margin:0 0 12px; font-weight:700; color:var(--ink); font-size:15px;">Already registered &amp; ID verified?</p>
+        <a href="my-booking.html" class="btn" style="display:inline-block; margin-bottom:10px;">Sign In to 'My Booking' (Email OTP) &rarr;</a>
+        <p style="margin:0; font-size:13px; color:var(--ink-light); line-height:1.4;">
+          Or open the secure payment link sent to your registered <b>Email &amp; WhatsApp</b> after ID verification.
+        </p>
+      </div>
+      <div style="text-align:center;">
+        <a href="index.html" class="btn ghost">Back to Home</a>
       </div>
     `;
-    const form = $("#lookup-f");
-    if (form) {
-      form.onsubmit = e => {
-        e.preventDefault();
-        const val = ($("#lookup-id").value || "").trim().toUpperCase();
-        if (val) {
-          window.location.search = "?id=" + encodeURIComponent(val);
-        }
-      };
-    }
   }
 
-  function renderNotFound(box, id, error) {
+  function renderAccessDenied(box, id, error) {
     box.innerHTML = `
       <div class="pay-header">
-        <span style="font-size:2.8rem">⚠️</span>
-        <h2>Booking Not Found</h2>
-        <p style="color:var(--ink-light);">${esc(error || "We could not find a booking matching this ID.")}</p>
+        <span style="font-size:3rem">🔒</span>
+        <h2>Secure Payment Access</h2>
+        <p style="color:var(--ink-light); margin-top:8px; line-height:1.5;">
+          ${esc(error || "For pilgrim security and privacy, payment details require the official verification link or an active login.")}
+        </p>
       </div>
-      <div style="text-align:center;margin-top:20px;">
-        <a href="pay.html" class="btn ghost">Try another Booking ID</a>
-        <a href="my-booking.html" class="btn" style="margin-left:8px;">View My Bookings</a>
+      <div style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #f59e0b; border-radius:8px; padding:14px; margin:20px 0; text-align:left; font-size:14px; color:#92400e; line-height:1.5;">
+        💡 <b>How to access your payment portal:</b>
+        <ol style="margin:8px 0 0 18px; padding:0;">
+          <li><b>Check your Email &amp; WhatsApp:</b> Tap the direct payment link sent to you after ID verification.</li>
+          <li><b>Or log in with your Email OTP:</b> Open <b>'My Booking'</b> to view all your passes and make your contribution securely.</li>
+        </ol>
+      </div>
+      <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <a href="my-booking.html" class="btn">Log In to 'My Booking' (Email OTP) &rarr;</a>
+        <a href="index.html" class="btn ghost">Back to Home</a>
       </div>
     `;
   }
